@@ -9,6 +9,10 @@ const oldRequire = Module.prototype.require
 
 let store
 
+const joinSep = (...args) => {
+  return path.join(...args).replace(/\\/g, '/')
+}
+
 Object.defineProperty(Module.prototype, 'require', {
   value: function require(moduleName) {
     if (builtinModules.indexOf(moduleName) >= 0) {
@@ -53,17 +57,19 @@ Object.defineProperty(Module.prototype, 'require', {
         // get the package json and figure out the main path to load
         const packagePath = `${MODULES_FOLDER}${moduleName}/package.json`
         const packageJson = JSON.parse(contents[packagePath].content)
-        codePath = `${MODULES_FOLDER}${moduleName}/${
+        codePath = joinSep(
+          MODULES_FOLDER,
+          moduleName,
           packageJson.main || 'index.js'
-        }`
+        )
       } else {
         // attempting to load an absolute file path
-        codePath = `${MODULES_FOLDER}${moduleName}`
+        codePath = joinSep(MODULES_FOLDER, moduleName)
       }
     } else {
       // attempting to load a relative path
       const parentPath = path.dirname(parentParts.join('/'))
-      codePath = `/${path.join(parentPath, moduleName)}`
+      codePath = `/${joinSep(parentPath, moduleName)}`
       if (codePath[codePath.length - 1] === '/') {
         codePath += 'index.js'
       }

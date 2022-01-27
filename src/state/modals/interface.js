@@ -7,6 +7,8 @@ export const open = (modalId, data) => dispatch => {
 
 export const openAt = (modalId, pos, data) => dispatch => {
   if (!modalIds[modalId]) {
+    console.log(modalIds, modalId)
+    console.log(modalIds[modalId])
     throw new Error(`Modal with id ${modalId} does not exist`)
   }
 

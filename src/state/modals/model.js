@@ -2,10 +2,10 @@ import { buildModel } from 'state-management/builder'
 
 export const modalIds = {
   intro: 'intro',
-  dependencySearch: 'dependency-search',
-  onlineBlockSearch: 'online-block-search',
-  editInputProperty: 'edit-input-property',
-  editOutputProperty: 'edit-output-property',
+  dependencySearch: 'dependencySearch',
+  onlineBlockSearch: 'onlineBlockSearch',
+  editInputProperty: 'editInputProperty',
+  editOutputProperty: 'editOutputProperty',
   confirmation: 'confirmation',
   editBlockInformation: 'editBlockInformation',
   auth: 'auth',
