@@ -7,6 +7,8 @@ import { app } from 'electron'
 import { delay } from 'utils/promise'
 import { join } from './disk/path'
 import { existsSync, readFileSync, writeFileSync, ensureDir } from './disk/fs'
+import { transform } from '@babel/core'
+import importExport from '@babel/plugin-transform-modules-commonjs'
 
 const VERSION = 2
 const RETRY_COUNT = 3
@@ -126,6 +128,20 @@ export const installDependency = async (depName, version) => {
   if (!dep) {
     dep = await getDependency(depName, version)
     await setCache(depName, version, dep)
+  }
+
+  // if an es module is found, then we try transpile it back to commonjs to work with electron limitations
+  const packageJson = JSON.parse(
+    (dep.contents[`/node_modules/${depName}/package.json`] || {}).content
+  )
+  if (packageJson && (packageJson.module || packageJson.type === 'module')) {
+    Object.keys(dep.contents)
+      .filter(file => file.endsWith('.js'))
+      .forEach(file => {
+        dep.contents[file].content = transform(dep.contents[file].content, {
+          plugins: [importExport],
+        }).code
+      })
   }
 
   return dep

@@ -67,27 +67,11 @@ export const transpile = (
     //ast: true
   }
 ) => {
-  const customRequire = ({ types: t }) => {
-    return {
-      visitor: {
-        CallExpression(path) {
-          // convert the import to a require call
-          if (path.node.callee.name === 'require') {
-            //path.node.callee.name = 'blockRequire'
-            //path.node.arguments.push(t.StringLiteral(blockId))
-          }
-        },
-      },
-    }
-  }
-
-  options.plugins.push(customRequire)
-
   // due to to wanting to use yield without a generator def,
   // we wrap the entire code with a generator and then move any
   // import nodes to the top of the program
   const wrappedCode = `
-    export default async function* run(state, currentTime, runOnce, stateUpdated, element, html, md, requireCSS){
+    export default async function* run(state, currentTime, runOnce, stateUpdated, element, html, md, requireCSS, __dirname){
       ${code}
     }
   `

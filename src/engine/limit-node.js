@@ -15,7 +15,11 @@ const joinSep = (...args) => {
 
 Object.defineProperty(Module.prototype, 'require', {
   value: function require(moduleName) {
-    if (builtinModules.indexOf(moduleName) >= 0) {
+    const primaryName = moduleName.split(':')[1] || moduleName
+    if (
+      builtinModules.indexOf(primaryName) >= 0 ||
+      primaryName === 'electron'
+    ) {
       console.log('Warning: Attempting to require builtin module:', moduleName)
       return oldRequire(moduleName)
     }
@@ -60,7 +64,7 @@ Object.defineProperty(Module.prototype, 'require', {
         codePath = joinSep(
           MODULES_FOLDER,
           moduleName,
-          packageJson.main || 'index.js'
+          packageJson.module || packageJson.main || 'index.js'
         )
       } else {
         // attempting to load an absolute file path
@@ -78,6 +82,12 @@ Object.defineProperty(Module.prototype, 'require', {
     const extension = path.extname(codePath)
     if (!extension) {
       codePath += '.js'
+    }
+
+    if (!contents[codePath]) {
+      throw new Error(
+        `Unable to find module path ${codePath}, for parent module ${parentModule}`
+      )
     }
 
     const code = contents[codePath].content

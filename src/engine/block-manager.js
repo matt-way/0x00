@@ -342,7 +342,9 @@ function runBlock(id, hash, yieldValue, currentTime) {
         link.href = join('file://', block.path, 'node_modules', relPath)
         domHead.innerHTML = ''
         domHead.appendChild(link)
-      }
+      },
+      // __dirname override block path
+      block.path
     )
   }
 
