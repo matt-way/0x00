@@ -110,12 +110,12 @@ const requestCache = async (depName, version) => {
 }
 
 const setCache = async (depName, version, manifest) => {
-  const folder = join(app.getPath('appData'), 'packages', depName)
+  const folder = join(app.getPath('appData'), '0x00', 'packages', depName)
   await ensureDir(folder)
 
   const path = join(
     app.getPath('appData'),
-    `packages/${depName}/${version}.json`
+    `0x00/packages/${depName}/${version}.json`
   )
   console.log(`Writing cache to ${path}`)
   writeFileSync(path, JSON.stringify(manifest))
@@ -127,21 +127,22 @@ export const installDependency = async (depName, version) => {
 
   if (!dep) {
     dep = await getDependency(depName, version)
-    await setCache(depName, version, dep)
-  }
 
-  // if an es module is found, then we try transpile it back to commonjs to work with electron limitations
-  const packageJson = JSON.parse(
-    (dep.contents[`/node_modules/${depName}/package.json`] || {}).content
-  )
-  if (packageJson && (packageJson.module || packageJson.type === 'module')) {
-    Object.keys(dep.contents)
-      .filter(file => file.endsWith('.js'))
-      .forEach(file => {
-        dep.contents[file].content = transform(dep.contents[file].content, {
-          plugins: [importExport],
-        }).code
-      })
+    // if an es module is found, then we try transpile it back to commonjs to work with electron limitations
+    const packageJson = JSON.parse(
+      (dep.contents[`/node_modules/${depName}/package.json`] || {}).content
+    )
+    if (packageJson && (packageJson.module || packageJson.type === 'module')) {
+      Object.keys(dep.contents)
+        .filter(file => file.endsWith('.js'))
+        .forEach(file => {
+          dep.contents[file].content = transform(dep.contents[file].content, {
+            plugins: [importExport],
+          }).code
+        })
+    }
+
+    await setCache(depName, version, dep)
   }
 
   return dep
