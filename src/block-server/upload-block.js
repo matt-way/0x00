@@ -5,7 +5,10 @@ const fbUploadBlock = httpsCallable(functions, 'uploadBlock')
 
 const uploadBlock = block => {
   const payload = {
-    'package.json': block.config,
+    'package.json': {
+      dependencies: {},
+      ...block.config,
+    },
     [block.config.main || 'code.js']: block.code,
   }
   return fbUploadBlock(payload).then(res => {
