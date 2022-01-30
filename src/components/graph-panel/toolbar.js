@@ -30,7 +30,7 @@ const Toolbar = props => {
               justifyContent: 'center',
             }}>
             <Icon sx={{ width: '18px', height: '18px' }} type="layersPlus" />
-            <div sx={{ padding: '0px 5px' }}>Add Block</div>
+            <div sx={{ padding: '0px 5px', fontSize: '13px' }}>Add Block</div>
             <Icon sx={{ width: '18px', height: '18px' }} type="chevronDown" />
           </Flex>
         }>

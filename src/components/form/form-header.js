@@ -10,9 +10,9 @@ const FormHeader = props => {
         display: 'flex',
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingBottom: '6px',
+        paddingBottom: '8px',
       }}>
-      <div sx={{ color: 'text' }}>{children}</div>
+      <div sx={{ color: 'text', fontSize: '13px' }}>{children}</div>
       {icon && (
         <div onClick={onIconClick}>
           <Icon type={icon} />

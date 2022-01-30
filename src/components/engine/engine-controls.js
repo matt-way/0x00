@@ -38,6 +38,7 @@ const EngineControls = props => {
       <ToolbarButton
         sx={{
           padding: '5px 12px',
+          fontSize: '13px',
         }}
         onClick={() => {
           programActions.reloadEngine()
