@@ -1,8 +1,6 @@
 import requireFromString from 'require-from-string'
 import Markdown from 'marli'
-//import { transpile } from './transpile'
 import { join } from 'path'
-//import { getAppPath } from 'native/app'
 import { subscribe, unsubscribe } from 'state-management/watcher'
 import {
   addUpdateLink,
@@ -34,44 +32,38 @@ function createBlock(id, block, program) {
     programPath: program.path,
     main: block.config.main,
     locked: block.config.locked,
-    /*modulePaths: [
-      join(getAppPath(), 'node_modules'),
-      join(program.path, 'node_modules'),
-    ],*/
     updateBlocks: {},
     events: [],
   }
 
   // create the state object
-  blocks[id].state = new Proxy(
-    {},
-    {
-      set(obj, key, value) {
-        obj[key] = value
-        // set any post blocks with the updated value
-        const links = getOutgoingLinks(id, key)
-        links.forEach(link => {
-          // flag the post blocks to be rerun with link values set
-          blocks[id].updateBlocks[link.targetBlockId] = {
-            ...blocks[id].updateBlocks[link.targetBlockId],
-            [link.targetPropId]: {
-              sourceBlockId: id,
-              sourcePropId: key,
-              value,
-            },
-          }
-        })
-
-        // if the block isn't currently in an execution pass (async state updates)
-        // we need to force a post run
-        if (blocks[id].dormant) {
-          processPostLinks(blocks[id])
+  blocks[id].state = {}
+  blocks[id].stateProxy = new Proxy(blocks[id].state, {
+    set(obj, key, value) {
+      obj[key] = value
+      // set any post blocks with the updated value
+      const links = getOutgoingLinks(id, key)
+      links.forEach(link => {
+        // flag the post blocks to be rerun with link values set
+        blocks[id].updateBlocks[link.targetBlockId] = {
+          ...blocks[id].updateBlocks[link.targetBlockId],
+          [link.targetPropId]: {
+            sourceBlockId: id,
+            sourcePropId: key,
+            value,
+          },
         }
+      })
 
-        return true
-      },
-    }
-  )
+      // if the block isn't currently in an execution pass (async state updates)
+      // we need to force a post run
+      if (blocks[id].dormant) {
+        processPostLinks(blocks[id])
+      }
+
+      return true
+    },
+  })
 
   blocks[id].events.push(
     subscribe(`blocks.${id}.path`, newPath => {
@@ -107,11 +99,6 @@ function createBlock(id, block, program) {
       `program.config.blocks.${id}.outputLinks`,
       (links = {}, prevLinks = {}) => {
         const flaggedBlocks = {}
-
-        // TODO: redux-electron-store doesn't implement a good facility for keeping
-        // equality for array items across process transfer. The entire cross thread state
-        // system needs to be rebuilt from the ground up at some stage. For now let's just treat
-        // array items as shallow refs where possible
 
         // removals - do first to make sure changes arent removed
         Object.keys(prevLinks).forEach(propId => {
@@ -236,15 +223,7 @@ async function buildRunFunction(id, code) {
   // and the engine will crash on this block. Need to setup a fix
   const block = blocks[id]
   const transpiledResult = transpile(id, code)
-  const blockFunction = requireFromString(
-    transpiledResult.code,
-    id
-    //join(block.path, block.main)
-    /*{
-      prependPaths: block.modulePaths,
-    }*/
-  )
-
+  const blockFunction = requireFromString(transpiledResult.code, id)
   block.run = blockFunction.default
 }
 
@@ -300,7 +279,7 @@ function runBlock(id, hash, yieldValue, currentTime) {
     const domContainer = block.domElement.children[1]
 
     block.generator = block.run(
-      block.state,
+      block.stateProxy,
       currentTime,
       // runOnce function
       // TODO: properly handle runOnce errors
@@ -312,7 +291,7 @@ function runBlock(id, hash, yieldValue, currentTime) {
       },
       // stateUpdated(key) function to force a propagation. Acts like an identity assignment
       stateKey => {
-        block.state[stateKey] = block.state[stateKey]
+        block.stateProxy[stateKey] = block.stateProxy[stateKey]
       },
       // dom element
       domContainer,
