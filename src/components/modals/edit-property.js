@@ -2,9 +2,11 @@
 import { useState } from 'state-management/hooks'
 import { useBlock } from 'state/blocks/hooks'
 import { useProgramActions } from 'state/program/hooks'
-import { PopMenu, Button, Input } from 'components/system'
+import { Fragment } from 'react'
+import { PopMenu, Button, Select, Input } from 'components/system'
+import { typeMap } from 'components/properties'
 
-const EditOutputProperty = props => {
+const EditProperty = props => {
   const {
     left,
     top,
@@ -16,11 +18,13 @@ const EditOutputProperty = props => {
   } = props
   const [block, blockActions] = useBlock(blockId)
   const programActions = useProgramActions()
-  const [nameValue, setNameValue] = useState(propId || linkSourceId || '')
 
   const blockConfig = block.config.block
   const { properties, propertyOrder } = blockConfig
   const propertyConfig = propId ? properties[propId] : {}
+
+  const [nameValue, setNameValue] = useState(propId || linkSourceId || '')
+  const [dataType, setDataType] = useState(propertyConfig.type || 'generic')
 
   const onClose = () => {
     close()
@@ -34,13 +38,15 @@ const EditOutputProperty = props => {
       left={left}
       top={top}
       onClose={onClose}
-      title={propId ? 'Edit Output Property' : 'Create Output Property'}
-      sx={{ minWidth: '200px' }}>
+      title={propId ? 'Edit Property' : 'Create Property'}
+      sx={{
+        minWidth: '200px',
+      }}>
       <div
         sx={{
           display: 'flex',
           flexDirection: 'row',
-          marginBottom: '8px',
+          marginBottom: '4px',
         }}>
         <div sx={{ flex: 1 }}>Name</div>
         <Input
@@ -58,13 +64,45 @@ const EditOutputProperty = props => {
       </div>
       <div
         sx={{
+          display: 'flex',
+          flexDirection: 'row',
+          marginBottom: '8px',
+        }}>
+        <div
+          sx={{
+            flex: 1,
+          }}>
+          Data Type
+        </div>
+        <Select
+          sx={{
+            flex: 1.5,
+          }}
+          options={Object.keys(typeMap).map(t => ({
+            key: t,
+            text: typeMap[t].label,
+          }))}
+          value={dataType}
+          onChange={event => {
+            setDataType(event.target.value)
+          }}
+        />
+        {/*<div>Custom Options Per Data Type</div>*/}
+      </div>
+      <div
+        sx={{
           textAlign: 'right',
         }}>
         <Button
-          onClick={async () => {
+          onClick={async e => {
             const newConfig = {
               ...propertyConfig,
-              output: true,
+            }
+
+            if (dataType !== 'generic') {
+              newConfig.type = dataType
+            } else {
+              delete newConfig.type
             }
 
             close() // close first to avoid propId changes crashing
@@ -76,7 +114,7 @@ const EditOutputProperty = props => {
             }
 
             if (linkSourceId) {
-              programActions.linkDrop(blockId, nameValue, true)
+              programActions.linkDrop(blockId, nameValue, false)
             }
           }}>
           {propId ? 'Save' : 'Create'}
@@ -93,4 +131,4 @@ const EditOutputProperty = props => {
   )
 }
 
-export default EditOutputProperty
+export default EditProperty

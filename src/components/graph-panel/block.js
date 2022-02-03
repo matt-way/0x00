@@ -26,8 +26,7 @@ const Block = props => {
   const [block, blockActions] = useBlock(id)
   const modalActions = useModalActions()
   const programActions = useProgramActions()
-  const inputCreatorRef = useRef()
-  const outputCreatorRef = useRef()
+  const propertyCreatorRef = useRef()
 
   if (!block) {
     return null
@@ -174,12 +173,41 @@ const Block = props => {
       <div
         sx={{
           display: 'flex',
-          flexDirection: 'row',
+          //flexDirection: 'row',
+          flexDirection: 'column',
           justifyContent: 'space-between',
           alignItems: 'center',
-          paddingTop: '6px',
+          marginTop: '6px',
         }}>
         <div
+          sx={{
+            display: 'flex',
+            width: '100%',
+            flexDirection: 'row',
+            justifyContent: 'center',
+            borderTop: '2px solid #414141',
+            cursor: 'pointer',
+          }}
+          ref={propertyCreatorRef}
+          onClick={() => {
+            const offset = propertyCreatorRef.current.getBoundingClientRect()
+            modalActions.openAt(
+              modalIds.editProperty,
+              { x: offset.left, y: offset.top },
+              { blockId: id }
+            )
+          }}>
+          <Icon
+            sx={{
+              display: 'block',
+              color: 'textSecondary',
+              width: '15px',
+              height: '15px',
+            }}
+            type="plus"
+          />
+        </div>
+        {/*<div
           sx={{
             visibility: newOutputConnectionAvailable ? 'hidden' : 'visible',
             borderTop: newInputConnectionAvailable
@@ -267,7 +295,7 @@ const Block = props => {
             }}
             type="plus"
           />
-        </div>
+          </div>*/}
       </div>
     </div>
   )

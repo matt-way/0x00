@@ -3,8 +3,7 @@ import { useModals } from 'state/modals/hooks'
 import Intro from './intro'
 import DependencySearch from './dependency-search'
 import OnlineBlockSearch from './online-block-search'
-import EditInputProperty from './edit-input-property'
-import EditOutputProperty from './edit-output-property'
+import EditProperty from './edit-property'
 import Confirmation from './confirmation'
 import EditBlockInformation from './edit-block-information'
 import Auth from './auth'
@@ -14,8 +13,7 @@ const lookup = {
   [modalIds.intro]: Intro,
   [modalIds.dependencySearch]: DependencySearch,
   [modalIds.onlineBlockSearch]: OnlineBlockSearch,
-  [modalIds.editInputProperty]: EditInputProperty,
-  [modalIds.editOutputProperty]: EditOutputProperty,
+  [modalIds.editProperty]: EditProperty,
   [modalIds.confirmation]: Confirmation,
   [modalIds.editBlockInformation]: EditBlockInformation,
   [modalIds.auth]: Auth,

@@ -86,6 +86,7 @@ const Property = props => {
         {output ? (
           <>
             <div sx={{ width: '100%', textAlign: 'right' }}>{id}</div>
+            <InputHub onDrop={onDrop} blockId={blockId} propId={id} />
             <OutputHub blockId={blockId} propId={id} onDrag={onDrag} />
           </>
         ) : (
@@ -98,6 +99,7 @@ const Property = props => {
               updateValue={updateValue}
             />
             <InputHub onDrop={onDrop} blockId={blockId} propId={id} />
+            <OutputHub blockId={blockId} propId={id} onDrag={onDrag} />
           </>
         )}
       </Flex>
