@@ -77,6 +77,8 @@ const Block = props => {
     linkDragging && linkDragging.sourceBlockId !== id && linkDragging.isOutput
   const newOutputConnectionAvailable =
     linkDragging && linkDragging.sourceBlockId !== id && !linkDragging.isOutput
+  const canCreateConnection =
+    newInputConnectionAvailable || newOutputConnectionAvailable
 
   return (
     <div
@@ -173,19 +175,33 @@ const Block = props => {
       <div
         sx={{
           display: 'flex',
-          //flexDirection: 'row',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
+          flexDirection: canCreateConnection ? 'row' : 'column',
+          justifyContent: newInputConnectionAvailable
+            ? 'flex-start'
+            : newOutputConnectionAvailable
+            ? 'flex-end'
+            : 'center',
           alignItems: 'center',
           marginTop: '6px',
         }}>
         <div
           sx={{
             display: 'flex',
-            width: '100%',
+            width: canCreateConnection ? 'auto' : '100%',
             flexDirection: 'row',
             justifyContent: 'center',
-            borderTop: '2px solid #414141',
+            borderWidth: newInputConnectionAvailable
+              ? '2px 2px 0px 0px'
+              : newOutputConnectionAvailable
+              ? '2px 0px 0px 2px'
+              : '2px 0px 0px 0px',
+            borderStyle: 'solid',
+            borderColor: '#414141',
+            borderRadius: newInputConnectionAvailable
+              ? '0px 5px 0px 0px'
+              : newOutputConnectionAvailable
+              ? '5px 0px 0px 0px'
+              : '0px',
             cursor: 'pointer',
           }}
           ref={propertyCreatorRef}
@@ -196,7 +212,22 @@ const Block = props => {
               { x: offset.left, y: offset.top },
               { blockId: id }
             )
-          }}>
+          }}
+          onMouseUp={
+            canCreateConnection
+              ? e => {
+                  e.stopPropagation()
+                  programActions.creatingLink(id)
+                  const offset =
+                    propertyCreatorRef.current.getBoundingClientRect()
+                  modalActions.openAt(
+                    modalIds.editProperty,
+                    { x: offset.left, y: offset.top },
+                    { blockId: id, linkSourceId: linkDragging.sourcePropId }
+                  )
+                }
+              : undefined
+          }>
           <Icon
             sx={{
               display: 'block',
@@ -207,95 +238,6 @@ const Block = props => {
             type="plus"
           />
         </div>
-        {/*<div
-          sx={{
-            visibility: newOutputConnectionAvailable ? 'hidden' : 'visible',
-            borderTop: newInputConnectionAvailable
-              ? '2px solid #6eb36d'
-              : '2px solid #414141',
-            borderRight: newInputConnectionAvailable
-              ? '2px solid #6eb36d'
-              : '2px solid #414141',
-            borderTopRightRadius: '5px',
-          }}
-          ref={inputCreatorRef}
-          onClick={() => {
-            const offset = inputCreatorRef.current.getBoundingClientRect()
-            modalActions.openAt(
-              modalIds.editInputProperty,
-              { x: offset.left, y: offset.top },
-              { blockId: id }
-            )
-          }}
-          onMouseUp={
-            newInputConnectionAvailable
-              ? e => {
-                  e.stopPropagation()
-                  programActions.creatingLink(id)
-                  const offset = inputCreatorRef.current.getBoundingClientRect()
-                  modalActions.openAt(
-                    modalIds.editInputProperty,
-                    { x: offset.left, y: offset.top },
-                    { blockId: id, linkSourceId: linkDragging.sourcePropId }
-                  )
-                }
-              : undefined
-          }>
-          <Icon
-            sx={{
-              display: 'block',
-              color: newInputConnectionAvailable ? '#6eb36d' : 'textSecondary',
-              width: '15px',
-              height: '15px',
-            }}
-            type="plus"
-          />
-        </div>
-        <div
-          sx={{
-            visibility: newInputConnectionAvailable ? 'hidden' : 'visible',
-            borderTop: newOutputConnectionAvailable
-              ? '2px solid #6eb36d'
-              : '2px solid #414141',
-            borderLeft: newOutputConnectionAvailable
-              ? '2px solid #6eb36d'
-              : '2px solid #414141',
-            borderTopLeftRadius: '5px',
-          }}
-          ref={outputCreatorRef}
-          onClick={e => {
-            const offset = outputCreatorRef.current.getBoundingClientRect()
-            modalActions.openAt(
-              modalIds.editOutputProperty,
-              { x: offset.left, y: offset.top },
-              { blockId: id }
-            )
-          }}
-          onMouseUp={
-            newOutputConnectionAvailable
-              ? e => {
-                  e.stopPropagation()
-                  programActions.creatingLink(id)
-                  const offset =
-                    outputCreatorRef.current.getBoundingClientRect()
-                  modalActions.openAt(
-                    modalIds.editOutputProperty,
-                    { x: offset.left, y: offset.top },
-                    { blockId: id, linkSourceId: linkDragging.sourcePropId }
-                  )
-                }
-              : undefined
-          }>
-          <Icon
-            sx={{
-              display: 'block',
-              color: newOutputConnectionAvailable ? '#6eb36d' : 'textSecondary',
-              width: '15px',
-              height: '15px',
-            }}
-            type="plus"
-          />
-          </div>*/}
       </div>
     </div>
   )
