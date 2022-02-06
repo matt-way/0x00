@@ -12,7 +12,7 @@ const Property = props => {
     updateProperty,
     removeProperty,
   } = props
-  const { type, output } = propertyConfig
+  const { type } = propertyConfig
   const [editing, setEditing] = useState(false)
   const [removing, setRemoving] = useState(false)
 
@@ -31,7 +31,7 @@ const Property = props => {
     <ContextMenu menu={menu}>
       <Flex>
         <div>
-          {name} - {type ? type : 'generic'} - {output ? 'output' : 'input'}
+          {name} - {type ? type : 'generic'}
         </div>
         <div
           onClick={() => {
