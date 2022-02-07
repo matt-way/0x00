@@ -1,5 +1,5 @@
 {
-  "name": "0x15",
+  "name": "0x00",
   "scripts": {
     "electron-app": "electron ./src/electron-app/main-esm.js",
     "ui": "webpack serve --config ./configs/webpack.dev.ui.config.js",

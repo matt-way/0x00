@@ -23,13 +23,11 @@ export const { actions, reducer, constants } = buildModel(
       )
       program.loadingBlocks = {}
     },
-    updateBlockPosition: (program, blockId, deltaX, deltaY) => {
+    updateBlockPosition: (program, blockId, x, y) => {
       const block = program.config.blocks[blockId]
-      // check for block existence here, as its possible a move event might be triggered
-      // after a removal
       if (block) {
-        block.x += deltaX
-        block.y += deltaY
+        block.x = x
+        block.y = y
       }
     },
     updateBlockOrder: (program, blockId, newIndex) => {
@@ -44,60 +42,39 @@ export const { actions, reducer, constants } = buildModel(
       }
       block.inputValues[propertyId] = value
     },
-    dragHub: (program, sourceBlockId, sourcePropId, isOutput) => {
-      program.linkDragging = {
-        sourceBlockId,
-        sourcePropId,
-        isOutput,
-      }
-    },
-    dropHub: (program, targetBlockId, targetPropId) => {
-      const { config, linkDragging } = program
-      const { sourceBlockId, sourcePropId, isOutput } = linkDragging
-
-      let sBlockId = sourceBlockId,
-        sPropId = sourcePropId,
-        tBlockId = targetBlockId,
-        tPropId = targetPropId
-      if (!isOutput) {
-        sBlockId = targetBlockId
-        sPropId = targetPropId
-        tBlockId = sourceBlockId
-        tPropId = sourcePropId
-      }
-
+    createLink: (
+      program,
+      sourceBlockId,
+      sourcePropId,
+      targetBlockId,
+      targetPropId
+    ) => {
+      const { config } = program
       // the target should only ever have one incoming link
       // so remove any others that might exist
       Object.keys(config.blocks).forEach(bId => {
         const block = config.blocks[bId]
         Object.keys(block.outputLinks || {}).forEach(linkSourceId => {
           const links = block.outputLinks[linkSourceId]
-          const linkIndex = links.findIndex(l => l[tBlockId] === tPropId)
+          const linkIndex = links.findIndex(
+            l => l[targetBlockId] === targetPropId
+          )
           if (linkIndex >= 0) {
             links.splice(linkIndex, 1)
           }
         })
       })
 
-      const block = config.blocks[sBlockId]
+      const block = config.blocks[sourceBlockId]
       if (!block.outputLinks) {
         block.outputLinks = {}
       }
-      block.outputLinks[sPropId] = [
-        ...(block.outputLinks[sPropId] || []),
+      block.outputLinks[sourcePropId] = [
+        ...(block.outputLinks[sourcePropId] || []),
         {
-          [tBlockId]: tPropId,
+          [targetBlockId]: targetPropId,
         },
       ]
-      delete program.linkDragging
-      delete program.creatingLink
-    },
-    creatingLink: (program, blockId) => {
-      program.creatingLink = blockId
-    },
-    cancelLinkDragDrop: program => {
-      delete program.linkDragging
-      delete program.creatingLink
     },
     removeLink: (
       program,

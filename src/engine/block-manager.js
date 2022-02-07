@@ -149,11 +149,11 @@ function createBlock(id, block, program) {
     subscribe(
       `program.config.blocks.${id}.inputValues`,
       (newValues, prevValues) => {
-        let shouldUpdate = false
+        //let shouldUpdate = false
         Object.keys(newValues).forEach(propId => {
           if (newValues[propId] !== prevValues?.[propId]) {
-            blocks[id].state[propId] = newValues[propId]
-            shouldUpdate = true
+            blocks[id].stateProxy[propId] = newValues[propId]
+            //shouldUpdate = true
           }
         })
         runIfAllowed(id)

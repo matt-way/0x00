@@ -2,6 +2,7 @@
 import { useRef } from 'react'
 import { typeMap } from '../properties'
 import { useModalActions } from 'state/modals/hooks'
+import { useProgramActions } from 'state/program/hooks'
 import { modalIds } from 'state/modals/model'
 import { Flex } from 'components/system'
 import { Handle } from 'react-flow-renderer'
@@ -12,6 +13,7 @@ const Property = props => {
   const { output, type } = config
   const domRef = useRef(null)
   const modalActions = useModalActions()
+  const programActions = useProgramActions()
 
   const PropertyType = typeMap[type || 'generic'].component
 
@@ -55,23 +57,43 @@ const Property = props => {
           blockId={blockId}
           config={config}
           value={value}
-          updateValue={updateValue}
+          updateValue={val => {
+            programActions.updatePropertyValue(blockId, id, val)
+          }}
         />
         <Handle
           type="target"
           position="left"
           id={id}
-          //style={{ top: 10, background: '#555' }}
           isConnectable={true}
-          onConnect={e => console.log('connected to a target', e)}
+          onConnect={params => {
+            const { source, target, sourceHandle, targetHandle } = params
+            if (source !== target) {
+              programActions.createLink(
+                source,
+                sourceHandle,
+                target,
+                targetHandle
+              )
+            }
+          }}
         />
         <Handle
           type="source"
           position="right"
           id={id}
-          //style={{ top: 10, background: '#555' }}
           isConnectable={true}
-          onConnect={e => console.log('connected to a source', e)}
+          onConnect={params => {
+            const { source, target, sourceHandle, targetHandle } = params
+            if (source !== target) {
+              programActions.createLink(
+                source,
+                sourceHandle,
+                target,
+                targetHandle
+              )
+            }
+          }}
         />
       </Flex>
     </ContextMenu>

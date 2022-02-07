@@ -3,13 +3,17 @@ import { useRef } from 'react'
 import { useBlock } from 'state/blocks/hooks'
 import { Handle } from 'react-flow-renderer'
 import { Icon } from 'components/system'
+import { useWorkspace } from 'state/workspace/hooks'
 import { useModalActions } from 'state/modals/hooks'
+import { modalIds } from 'state/modals/model'
 import Property from './property'
+import ContextMenu from 'electron-react-context-menu/renderer'
 
 const Block = props => {
   const { id, data: blockInstance } = props
   const [block, blockActions] = useBlock(id)
   const modalActions = useModalActions()
+  const [workspace, workspaceActions] = useWorkspace()
   const propertyCreatorRef = useRef()
 
   const { config = {} } = block
@@ -17,7 +21,7 @@ const Block = props => {
   const { properties = {}, propertyOrder = [] } = blockConfig
   const { inputValues = {} } = blockInstance
 
-  const selected = false
+  const selected = workspace.selectedBlockId === id
   return (
     <div
       sx={{
@@ -27,27 +31,78 @@ const Block = props => {
         borderRadius: '6px',
         minWidth: '100px',
       }}>
-      <div
-        sx={{
-          borderRadius: '5px 5px 0px 0px',
-          backgroundColor: 'blockHeader',
-          padding: '8px',
-          marginBottom: '5px',
-          color: 'text',
-        }}>
-        {block.name || block.configname}
-      </div>
+      <ContextMenu
+        menu={[
+          {
+            label: 'Save State to File',
+            click: () => {
+              invoke.blocks.saveState(id)
+            },
+          },
+          {
+            label: 'Load State from File',
+            click: () => {
+              invoke.blocks.loadState(id)
+            },
+          },
+          {
+            label: 'Delete Block',
+            click: async () => {
+              invoke.blocks.remove(id)
+            },
+          },
+        ]}>
+        <div
+          sx={{
+            borderRadius: '5px 5px 0px 0px',
+            backgroundColor: 'blockHeader',
+            padding: '8px',
+            marginBottom: '5px',
+            color: 'text',
+          }}
+          className="block-header"
+          onClick={() => {
+            workspaceActions.selectBlock(id)
+          }}>
+          {block.config.locked && (
+            <Icon
+              sx={{
+                width: '17px',
+                height: '17px',
+                marginRight: '8px',
+                cursor: 'pointer',
+                color: 'red',
+              }}
+              type="lockAlertOutline"
+              onClick={async e => {
+                const offset = e.currentTarget.getBoundingClientRect()
+                const confirmed = await modalActions.openAt(
+                  modalIds.confirmation,
+                  { x: offset.left, y: offset.top },
+                  {
+                    title: 'Warning - Downloaded Code',
+                    message:
+                      'Please ensure you have read the code and dependencies before unlocking and running this downloaded block.',
+                    okText: 'Unlock',
+                  }
+                )
+                if (confirmed) {
+                  blockActions.unlock()
+                }
+              }}
+            />
+          )}
+          {block.name || block.config.name}
+        </div>
+      </ContextMenu>
       {propertyOrder.map(propId => {
         return (
           <Property
             key={propId}
             id={propId}
-            //propsRef={propsRef}
             config={properties[propId]}
             value={inputValues[propId]}
             blockId={id}
-            //blockX={renderX}
-            //blockY={renderY}
             updateValue={newValue =>
               onPropertyValueUpdated(id, propId, newValue)
             }
