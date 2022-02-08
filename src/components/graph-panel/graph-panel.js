@@ -1,11 +1,13 @@
 /** @jsxImportSource theme-ui */
 import { useProgram } from 'state/program/hooks'
+import { useWorkspace } from 'state/workspace/hooks'
 import { Flex, FlexBox } from 'components/system'
 import Toolbar from './toolbar'
 import GraphRenderer from './graph-renderer'
 
 const GraphPanel = props => {
   const [program, programActions] = useProgram()
+  const [workspace] = useWorkspace()
 
   return (
     <Flex
@@ -23,6 +25,7 @@ const GraphPanel = props => {
         <GraphRenderer
           program={program.config}
           programActions={programActions}
+          selectedBlockId={workspace.selectedBlockId}
         />
       )}
     </Flex>

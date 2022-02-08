@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import ReactFlow, { Controls, applyNodeChanges } from 'react-flow-renderer'
 import { FlexBox } from 'components/system'
+import { useBlock } from 'state/blocks/hooks'
 
 import Block from './block'
 
@@ -10,41 +11,48 @@ const nodeTypes = {
 }
 
 const GraphRenderer = props => {
-  const { program, programActions } = props
+  const { program, programActions, selectedBlockId } = props
   const { blocks } = program
-  const externalNodes = Object.entries(blocks).map(([id, block]) => ({
-    id,
-    type: 'block',
-    position: { x: block.x, y: block.y },
-    data: block,
-    draggable: true,
-    dragHandle: '.block-header',
-  }))
 
-  const externalEdges = []
-  for (const [blockId, blockInstance] of Object.entries(blocks)) {
-    const { outputLinks = {} } = blockInstance
-    Object.entries(outputLinks).forEach(([propId, links]) => {
-      links.forEach(link => {
-        const targetBlockId = Object.keys(link)[0]
-        const targetPropId = link[targetBlockId]
-        externalEdges.push({
-          id: `${blockId}-${propId}-${targetBlockId}-${targetPropId}`,
-          source: blockId,
-          target: targetBlockId,
-          sourceHandle: propId,
-          targetHandle: targetPropId,
-        })
-      })
-    })
-  }
-
+  /*
   // allow external changes to our state to update the flow graph
   useEffect(() => {
     console.log('updating from redux change')
+
+    const externalNodes = Object.entries(blocks).map(([id, block]) => ({
+      id,
+      type: 'block',
+      position: { x: block.x, y: block.y },
+      data: {
+        blockInstance: block,
+        selected: id === selectedBlockId,
+      },
+      draggable: true,
+      dragHandle: '.block-header',
+    }))
+
+    const externalEdges = []
+    for (const [blockId, blockInstance] of Object.entries(blocks)) {
+      const { outputLinks = {} } = blockInstance
+      Object.entries(outputLinks).forEach(([propId, links]) => {
+        links.forEach(link => {
+          const targetBlockId = Object.keys(link)[0]
+          const targetPropId = link[targetBlockId]
+          externalEdges.push({
+            id: `${blockId}-${propId}-${targetBlockId}-${targetPropId}`,
+            source: blockId,
+            target: targetBlockId,
+            sourceHandle: propId,
+            targetHandle: targetPropId,
+          })
+        })
+      })
+    }
+
     setNodes(externalNodes)
     setEdges(externalEdges)
-  }, [program, blocks])
+  }, [program, blocks, selectedBlockId])
+  */
 
   const [nodes, setNodes] = useState([])
   const [edges, setEdges] = useState([])
@@ -67,7 +75,15 @@ const GraphRenderer = props => {
         fontFamily: 'Consolas, "Courier New", monospace',
         color: 'textSecondary',
       }}>
-      <ReactFlowWrapper
+      {Object.entries(blocks).map(([id, block]) => (
+        <DummyBlock
+          key={id}
+          id={id}
+          blockInstance={block}
+          setNodes={setNodes}
+        />
+      ))}
+      <ReactFlow
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
@@ -75,14 +91,56 @@ const GraphRenderer = props => {
         onEdgesChange={onEdgesChange}
         onNodeDragStop={onNodeDragStop}>
         <Controls showInteractive={false} />
-      </ReactFlowWrapper>
+      </ReactFlow>
     </FlexBox>
   )
 }
 
-const ReactFlowWrapper = React.memo(props => {
-  console.log('rerendering flow')
-  return <ReactFlow {...props} />
-})
+const DummyBlock = props => {
+  const { id, blockInstance, setNodes } = props
+  const [block] = useBlock(id)
+
+  useEffect(() => {
+    setNodes(ns => [
+      ...ns,
+      {
+        id,
+        type: 'block',
+        position: { x: blockInstance.x, y: blockInstance.y },
+        data: {
+          block,
+          blockInstance,
+          selected: false, //id === selectedBlockId,
+        },
+        draggable: true,
+        dragHandle: '.block-header',
+      },
+    ])
+
+    return () => {
+      console.log('removing dummy block', id)
+      setNodes(ns => ns.filter(n => n.id !== id))
+    }
+  }, [])
+
+  useEffect(() => {
+    setNodes(ns =>
+      ns.map(n => {
+        if (n.id === id) {
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              block,
+            },
+          }
+        }
+        return n
+      })
+    )
+  }, [block])
+
+  return <>{}</>
+}
 
 export default GraphRenderer

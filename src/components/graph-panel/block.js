@@ -1,9 +1,9 @@
 /** @jsxImportSource theme-ui */
 import { useRef } from 'react'
-import { useBlock } from 'state/blocks/hooks'
+import { useBlockActions } from 'state/blocks/hooks'
 import { Handle } from 'react-flow-renderer'
 import { Icon } from 'components/system'
-import { useWorkspace } from 'state/workspace/hooks'
+import { useWorkspaceActions } from 'state/workspace/hooks'
 import { useModalActions } from 'state/modals/hooks'
 import { modalIds } from 'state/modals/model'
 import Property from './property'
@@ -11,11 +11,12 @@ import ContextMenu from 'electron-react-context-menu/renderer'
 import { invoke } from 'ipc/renderer'
 
 const Block = props => {
-  const { id, data: blockInstance } = props
+  const { id, data } = props
+  const { block, blockInstance, selected } = data
   console.log('rendering block:', id, Math.random())
-  const [block, blockActions] = useBlock(id)
+  const blockActions = useBlockActions(id)
   const modalActions = useModalActions()
-  const [workspace, workspaceActions] = useWorkspace()
+  const workspaceActions = useWorkspaceActions()
   const propertyCreatorRef = useRef()
 
   const { config = {} } = block
@@ -23,7 +24,6 @@ const Block = props => {
   const { properties = {}, propertyOrder = [] } = blockConfig
   const { inputValues = {} } = blockInstance
 
-  const selected = workspace.selectedBlockId === id
   return (
     <div
       sx={{
