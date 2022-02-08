@@ -8,9 +8,11 @@ import { useModalActions } from 'state/modals/hooks'
 import { modalIds } from 'state/modals/model'
 import Property from './property'
 import ContextMenu from 'electron-react-context-menu/renderer'
+import { invoke } from 'ipc/renderer'
 
 const Block = props => {
   const { id, data: blockInstance } = props
+  console.log('rendering block:', id, Math.random())
   const [block, blockActions] = useBlock(id)
   const modalActions = useModalActions()
   const [workspace, workspaceActions] = useWorkspace()

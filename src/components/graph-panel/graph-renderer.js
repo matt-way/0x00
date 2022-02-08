@@ -1,5 +1,5 @@
 /** @jsxImportSource theme-ui */
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import ReactFlow, { Controls, applyNodeChanges } from 'react-flow-renderer'
 import { FlexBox } from 'components/system'
 
@@ -39,6 +39,13 @@ const GraphRenderer = props => {
     })
   }
 
+  // allow external changes to our state to update the flow graph
+  useEffect(() => {
+    console.log('updating from redux change')
+    setNodes(externalNodes)
+    setEdges(externalEdges)
+  }, [program, blocks])
+
   const [nodes, setNodes] = useState([])
   const [edges, setEdges] = useState([])
 
@@ -48,12 +55,6 @@ const GraphRenderer = props => {
   const onEdgesChange = useCallback(changes => {
     setEdges(es => applyEdgeChanges(changes, es))
   }, [])
-
-  // allow external changes to our state to update the flow graph
-  useEffect(() => {
-    setNodes(externalNodes)
-    setEdges(externalEdges)
-  }, [blocks])
 
   const onNodeDragStop = useCallback((e, params) => {
     const { id, position } = params
@@ -66,7 +67,7 @@ const GraphRenderer = props => {
         fontFamily: 'Consolas, "Courier New", monospace',
         color: 'textSecondary',
       }}>
-      <ReactFlow
+      <ReactFlowWrapper
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
@@ -74,9 +75,14 @@ const GraphRenderer = props => {
         onEdgesChange={onEdgesChange}
         onNodeDragStop={onNodeDragStop}>
         <Controls showInteractive={false} />
-      </ReactFlow>
+      </ReactFlowWrapper>
     </FlexBox>
   )
 }
+
+const ReactFlowWrapper = React.memo(props => {
+  console.log('rerendering flow')
+  return <ReactFlow {...props} />
+})
 
 export default GraphRenderer
