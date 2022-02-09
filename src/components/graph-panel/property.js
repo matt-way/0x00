@@ -9,13 +9,23 @@ import { Handle } from 'react-flow-renderer'
 import ContextMenu from 'electron-react-context-menu/renderer'
 
 const Property = props => {
-  const { id, config = {}, value, blockId, updateValue, blockActions } = props
+  const {
+    id,
+    config = {},
+    value,
+    blockId,
+    incomingConnected,
+    outgoingConnected,
+    updateValue,
+    blockActions,
+  } = props
   const { output, type } = config
   const domRef = useRef(null)
   const modalActions = useModalActions()
   const programActions = useProgramActions()
 
-  const PropertyType = typeMap[type || 'generic'].component
+  const propType = incomingConnected ? 'generic' : type || 'generic'
+  const PropertyType = typeMap[propType].component
 
   return (
     <ContextMenu
@@ -60,24 +70,28 @@ const Property = props => {
           updateValue={val => {
             programActions.updatePropertyValue(blockId, id, val)
           }}
+          incomingConnected={incomingConnected}
+          outgoingConnected={outgoingConnected}
         />
-        <Handle
-          type="target"
-          position="left"
-          id={id}
-          isConnectable={true}
-          onConnect={params => {
-            const { source, target, sourceHandle, targetHandle } = params
-            if (source !== target) {
-              programActions.createLink(
-                source,
-                sourceHandle,
-                target,
-                targetHandle
-              )
-            }
-          }}
-        />
+        {incomingConnected && (
+          <Handle
+            type="target"
+            position="left"
+            id={id}
+            isConnectable={true}
+            onConnect={params => {
+              const { source, target, sourceHandle, targetHandle } = params
+              if (source !== target) {
+                programActions.createLink(
+                  source,
+                  sourceHandle,
+                  target,
+                  targetHandle
+                )
+              }
+            }}
+          />
+        )}
         <Handle
           type="source"
           position="right"

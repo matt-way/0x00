@@ -12,7 +12,7 @@ import { invoke } from 'ipc/renderer'
 
 const Block = props => {
   const { id, data, selected } = props
-  const { block, blockInstance } = data
+  const { block, blockInstance, incomingLinks = {} } = data
   console.log('rendering block:', id, Math.random())
   const blockActions = useBlockActions(id)
   const modalActions = useModalActions()
@@ -22,7 +22,7 @@ const Block = props => {
   const { config = {} } = block
   const blockConfig = config.block || {}
   const { properties = {}, propertyOrder = [] } = blockConfig
-  const { inputValues = {} } = blockInstance
+  const { inputValues = {}, outputLinks = {} } = blockInstance
 
   return (
     <div
@@ -109,6 +109,8 @@ const Block = props => {
               onPropertyValueUpdated(id, propId, newValue)
             }
             blockActions={blockActions}
+            incomingConnected={incomingLinks[propId]}
+            outgoingConnected={!!outputLinks[propId]}
           />
         )
       })}

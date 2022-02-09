@@ -1,8 +1,16 @@
 /** @jsxImportSource theme-ui */
 
 const Generic = props => {
-  const { id } = props
-  return <div>{id}</div>
+  const { id, incomingConnected, outgoingConnected } = props
+  return (
+    <div
+      sx={{
+        width: '100%',
+        textAlign: outgoingConnected && !incomingConnected ? 'right' : 'left',
+      }}>
+      {id}
+    </div>
+  )
 }
 
 export default Generic

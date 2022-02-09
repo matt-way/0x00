@@ -5,9 +5,14 @@ import { FlexBox } from 'components/system'
 import { useBlock } from 'state/blocks/hooks'
 
 import Block from './block'
+import Link from './link'
 
 const nodeTypes = {
   block: Block,
+}
+
+const edgeTypes = {
+  link: Link,
 }
 
 const GraphRenderer = props => {
@@ -29,6 +34,32 @@ const GraphRenderer = props => {
     programActions.updateBlockPosition(id, position.x, position.y)
   }, [])
 
+  const edgeSet = []
+  Object.entries(blocks).forEach(([blockId, blockInstance]) => {
+    Object.entries(blockInstance.outputLinks || {}).forEach(
+      ([propId, links]) => {
+        links.forEach(link => {
+          const targetBlockId = Object.keys(link)[0]
+          const targetPropId = link[targetBlockId]
+          const id = `${blockId}-${propId}-${targetBlockId}-${targetPropId}`
+
+          edgeSet.push({
+            id,
+            source: blockId,
+            target: targetBlockId,
+            sourceHandle: propId,
+            targetHandle: targetPropId,
+            type: 'link',
+          })
+        })
+      }
+    )
+  })
+
+  // Note: The link elements need to follow the entire set of nodes,
+  // hence not using a hierarchy. This is because all the nodes must exit
+  // to propagate up to date link information to them.
+
   return (
     <FlexBox
       sx={{
@@ -44,13 +75,25 @@ const GraphRenderer = props => {
           setEdges={setEdges}
         />
       ))}
+      {edgeSet.map(edge => (
+        <DummyLink
+          key={edge.id}
+          edge={edge}
+          setEdges={setEdges}
+          setNodes={setNodes}
+        />
+      ))}
       <ReactFlow
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onNodeDragStop={onNodeDragStop}>
+        onNodeDragStop={onNodeDragStop}
+        onEdgeContextMenu={e => {
+          console.log(e)
+        }}>
         <Controls showInteractive={false} />
       </ReactFlow>
     </FlexBox>
@@ -117,56 +160,52 @@ const DummyBlock = props => {
     )
   }, [blockInstance])
 
-  return Object.entries(blockInstance.outputLinks || {}).map(
-    ([propId, links]) => (
-      <DummyLinkSet
-        key={propId}
-        blockId={id}
-        propId={propId}
-        links={links}
-        setEdges={setEdges}
-      />
-    )
-  )
-}
-
-const DummyLinkSet = props => {
-  const { blockId, propId, links = [], setEdges } = props
-  return links.map(link => {
-    const targetBlockId = Object.keys(link)[0]
-    const targetPropId = link[targetBlockId]
-    return (
-      <DummyLink
-        key={`${targetBlockId}-${targetPropId}`}
-        blockId={blockId}
-        propId={propId}
-        targetBlockId={targetBlockId}
-        targetPropId={targetPropId}
-        setEdges={setEdges}
-      />
-    )
-  })
+  return null
 }
 
 const DummyLink = props => {
-  const { blockId, propId, targetBlockId, targetPropId, setEdges } = props
-  const id = `${blockId}-${propId}-${targetBlockId}-${targetPropId}`
+  const { edge, setEdges, setNodes } = props
 
   useEffect(() => {
-    setEdges(es => [
-      ...es,
-      {
-        id,
-        source: blockId,
-        target: targetBlockId,
-        sourceHandle: propId,
-        targetHandle: targetPropId,
-      },
-    ])
+    setEdges(es => [...es, edge])
+
+    setNodes(ns =>
+      ns.map(n => {
+        if (n.id === edge.target) {
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              incomingLinks: {
+                ...n.data.incomingLinks,
+                [edge.targetHandle]: true,
+              },
+            },
+          }
+        }
+        return n
+      })
+    )
 
     return () => {
-      console.log('removing dummy link', id)
-      setEdges(es => es.filter(e => e.id !== id))
+      setEdges(es => es.filter(e => e.id !== edge.id))
+      setNodes(ns =>
+        ns.map(n => {
+          if (n.id === edge.target) {
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                incomingLinks: {
+                  ...n.data.incomingLinks,
+                  [edge.targetHandle]: false,
+                },
+              },
+            }
+          }
+          return n
+        })
+      )
     }
   }, [])
 
