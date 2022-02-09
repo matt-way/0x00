@@ -11,8 +11,8 @@ import ContextMenu from 'electron-react-context-menu/renderer'
 import { invoke } from 'ipc/renderer'
 
 const Block = props => {
-  const { id, data } = props
-  const { block, blockInstance, selected } = data
+  const { id, data, selected } = props
+  const { block, blockInstance } = data
   console.log('rendering block:', id, Math.random())
   const blockActions = useBlockActions(id)
   const modalActions = useModalActions()

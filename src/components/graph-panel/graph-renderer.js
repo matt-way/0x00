@@ -11,7 +11,7 @@ const nodeTypes = {
 }
 
 const GraphRenderer = props => {
-  const { program, programActions, selectedBlockId } = props
+  const { program, programActions } = props
   const { blocks } = program
 
   const [nodes, setNodes] = useState([])
@@ -71,7 +71,6 @@ const DummyBlock = props => {
         data: {
           block,
           blockInstance,
-          selected: false, //id === selectedBlockId,
         },
         draggable: true,
         dragHandle: '.block-header',
