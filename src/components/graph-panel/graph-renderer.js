@@ -14,46 +14,6 @@ const GraphRenderer = props => {
   const { program, programActions, selectedBlockId } = props
   const { blocks } = program
 
-  /*
-  // allow external changes to our state to update the flow graph
-  useEffect(() => {
-    console.log('updating from redux change')
-
-    const externalNodes = Object.entries(blocks).map(([id, block]) => ({
-      id,
-      type: 'block',
-      position: { x: block.x, y: block.y },
-      data: {
-        blockInstance: block,
-        selected: id === selectedBlockId,
-      },
-      draggable: true,
-      dragHandle: '.block-header',
-    }))
-
-    const externalEdges = []
-    for (const [blockId, blockInstance] of Object.entries(blocks)) {
-      const { outputLinks = {} } = blockInstance
-      Object.entries(outputLinks).forEach(([propId, links]) => {
-        links.forEach(link => {
-          const targetBlockId = Object.keys(link)[0]
-          const targetPropId = link[targetBlockId]
-          externalEdges.push({
-            id: `${blockId}-${propId}-${targetBlockId}-${targetPropId}`,
-            source: blockId,
-            target: targetBlockId,
-            sourceHandle: propId,
-            targetHandle: targetPropId,
-          })
-        })
-      })
-    }
-
-    setNodes(externalNodes)
-    setEdges(externalEdges)
-  }, [program, blocks, selectedBlockId])
-  */
-
   const [nodes, setNodes] = useState([])
   const [edges, setEdges] = useState([])
 
@@ -81,6 +41,7 @@ const GraphRenderer = props => {
           id={id}
           blockInstance={block}
           setNodes={setNodes}
+          setEdges={setEdges}
         />
       ))}
       <ReactFlow
@@ -97,7 +58,7 @@ const GraphRenderer = props => {
 }
 
 const DummyBlock = props => {
-  const { id, blockInstance, setNodes } = props
+  const { id, blockInstance, setNodes, setEdges } = props
   const [block] = useBlock(id)
 
   useEffect(() => {
@@ -140,7 +101,77 @@ const DummyBlock = props => {
     )
   }, [block])
 
-  return <>{}</>
+  useEffect(() => {
+    setNodes(ns =>
+      ns.map(n => {
+        if (n.id === id) {
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              blockInstance,
+            },
+          }
+        }
+        return n
+      })
+    )
+  }, [blockInstance])
+
+  return Object.entries(blockInstance.outputLinks || {}).map(
+    ([propId, links]) => (
+      <DummyLinkSet
+        key={propId}
+        blockId={id}
+        propId={propId}
+        links={links}
+        setEdges={setEdges}
+      />
+    )
+  )
+}
+
+const DummyLinkSet = props => {
+  const { blockId, propId, links = [], setEdges } = props
+  return links.map(link => {
+    const targetBlockId = Object.keys(link)[0]
+    const targetPropId = link[targetBlockId]
+    return (
+      <DummyLink
+        key={`${targetBlockId}-${targetPropId}`}
+        blockId={blockId}
+        propId={propId}
+        targetBlockId={targetBlockId}
+        targetPropId={targetPropId}
+        setEdges={setEdges}
+      />
+    )
+  })
+}
+
+const DummyLink = props => {
+  const { blockId, propId, targetBlockId, targetPropId, setEdges } = props
+  const id = `${blockId}-${propId}-${targetBlockId}-${targetPropId}`
+
+  useEffect(() => {
+    setEdges(es => [
+      ...es,
+      {
+        id,
+        source: blockId,
+        target: targetBlockId,
+        sourceHandle: propId,
+        targetHandle: targetPropId,
+      },
+    ])
+
+    return () => {
+      console.log('removing dummy link', id)
+      setEdges(es => es.filter(e => e.id !== id))
+    }
+  }, [])
+
+  return null
 }
 
 export default GraphRenderer
