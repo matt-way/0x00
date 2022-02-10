@@ -110,7 +110,9 @@ const Block = props => {
             }
             blockActions={blockActions}
             incomingConnected={incomingLinks[propId]}
-            outgoingConnected={!!outputLinks[propId]}
+            outgoingConnected={
+              outputLinks[propId] && outputLinks[propId].length > 0
+            }
           />
         )
       })}

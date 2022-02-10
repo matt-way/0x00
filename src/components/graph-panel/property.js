@@ -73,25 +73,26 @@ const Property = props => {
           incomingConnected={incomingConnected}
           outgoingConnected={outgoingConnected}
         />
-        {incomingConnected && (
-          <Handle
-            type="target"
-            position="left"
-            id={id}
-            isConnectable={true}
-            onConnect={params => {
-              const { source, target, sourceHandle, targetHandle } = params
-              if (source !== target) {
-                programActions.createLink(
-                  source,
-                  sourceHandle,
-                  target,
-                  targetHandle
-                )
-              }
-            }}
-          />
-        )}
+        <Handle
+          type="target"
+          position="left"
+          id={id}
+          isConnectable={true}
+          onConnect={params => {
+            const { source, target, sourceHandle, targetHandle } = params
+            if (source !== target) {
+              programActions.createLink(
+                source,
+                sourceHandle,
+                target,
+                targetHandle
+              )
+            }
+          }}
+          style={{
+            borderColor: incomingConnected ? '#fff' : '#555',
+          }}
+        />
         <Handle
           type="source"
           position="right"
@@ -107,6 +108,9 @@ const Property = props => {
                 targetHandle
               )
             }
+          }}
+          sx={{
+            borderColor: outgoingConnected ? '#fff' : '#555',
           }}
         />
       </Flex>

@@ -1,5 +1,6 @@
 /** @jsxImportSource theme-ui */
-import { getBezierPath, getMarkerEnd } from 'react-flow-renderer'
+import { getBezierPath } from 'react-flow-renderer'
+//import ContextMenu from 'electron-react-context-menu/renderer'
 
 export default function CustomEdge({
   id,
@@ -9,10 +10,7 @@ export default function CustomEdge({
   targetY,
   sourcePosition,
   targetPosition,
-  style = {},
-  data,
-  arrowHeadType,
-  markerEndId,
+  selected,
 }) {
   const edgePath = getBezierPath({
     sourceX,
@@ -22,18 +20,36 @@ export default function CustomEdge({
     targetY,
     targetPosition,
   })
-  //const markerEnd = getMarkerEnd(arrowHeadType, markerEndId)
-  console.log('rendering edge')
   return (
     <>
+      {/*<ContextMenu
+        menu={[
+          {
+            label: 'Remove Link',
+            click: async () => {
+              console.log('removeLink()')
+            },
+          },
+        ]}>*/}
+      <path
+        className="react-flow__edge-path"
+        style={{
+          stroke: 'transparent',
+          fill: 'none',
+          strokeWidth: 10,
+          cursor: 'pointer',
+        }}
+        d={edgePath}
+      />
+      {/*</ContextMenu>*/}
       <path
         id={id}
         style={{
-          stroke: 'red',
+          stroke: selected ? '#f90' : '#999',
+          cursor: 'pointer',
         }}
         className="react-flow__edge-path"
         d={edgePath}
-        //markerEnd={markerEnd}
       />
     </>
   )

@@ -1,6 +1,11 @@
 /** @jsxImportSource theme-ui */
 import React, { useState, useEffect, useCallback } from 'react'
-import ReactFlow, { Controls, applyNodeChanges } from 'react-flow-renderer'
+import ReactFlow, {
+  Controls,
+  applyNodeChanges,
+  applyEdgeChanges,
+  useKeyPress,
+} from 'react-flow-renderer'
 import { FlexBox } from 'components/system'
 import { useBlock } from 'state/blocks/hooks'
 
@@ -22,10 +27,30 @@ const GraphRenderer = props => {
   const [nodes, setNodes] = useState([])
   const [edges, setEdges] = useState([])
 
+  // override deletion to only work with nodes
+  const deleteKeyPressed = useKeyPress(['Delete', 'Backspace'])
+  useEffect(() => {
+    const selectedEdge = edges.find(e => e.selected)
+    if (selectedEdge) {
+      const { source, sourceHandle, target, targetHandle } = selectedEdge
+      programActions.removeLink(source, sourceHandle, target, targetHandle)
+    }
+  }, [deleteKeyPressed])
+
   const onNodesChange = useCallback(changes => {
+    const selected = changes.find(c => c.type === 'select' && c.selected)
+    if (selected) {
+      // deselect all edges
+      setEdges(es => es.map(e => ({ ...e, selected: false })))
+    }
     setNodes(ns => applyNodeChanges(changes, ns))
   }, [])
   const onEdgesChange = useCallback(changes => {
+    const selected = changes.find(c => c.type === 'select' && c.selected)
+    if (selected) {
+      // deselect all nodes
+      setNodes(ns => ns.map(n => ({ ...n, selected: false })))
+    }
     setEdges(es => applyEdgeChanges(changes, es))
   }, [])
 
@@ -84,6 +109,7 @@ const GraphRenderer = props => {
         />
       ))}
       <ReactFlow
+        fitView
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
@@ -91,9 +117,7 @@ const GraphRenderer = props => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeDragStop={onNodeDragStop}
-        onEdgeContextMenu={e => {
-          console.log(e)
-        }}>
+        deleteKeyCode={[]}>
         <Controls showInteractive={false} />
       </ReactFlow>
     </FlexBox>
