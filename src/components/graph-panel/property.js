@@ -36,7 +36,7 @@ const Property = props => {
           click: () => {
             const offset = domRef.current.getBoundingClientRect()
             modalActions.openAt(
-              output ? modalIds.editOutputProperty : modalIds.editInputProperty,
+              modalIds.editProperty,
               { x: offset.left, y: offset.bottom },
               { blockId, propId: id }
             )

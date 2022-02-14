@@ -106,8 +106,8 @@ export const { actions, reducer, constants } = buildModel(
     [programConstants.createLink]: (
       blocks,
       sourceBlockId,
-      targetBlockId,
       sourcePropId,
+      targetBlockId,
       targetPropId
     ) => {
       const { block: sourceBlock } = blocks[sourceBlockId].config

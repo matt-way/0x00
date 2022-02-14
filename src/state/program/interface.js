@@ -7,7 +7,7 @@ function findIdealName(name, names) {
     ideal = `${name}${i}`
     i++
   }
-  return name
+  return ideal
 }
 
 export const createLink =
@@ -16,13 +16,13 @@ export const createLink =
     const { blocks } = getState()
     let newId
     if (!sourcePropId) {
-      const targetBlock = blocks[targetBlockId]
-      const { propertyOrder } = targetBlock.config.block
-      newId = sourcePropId = findIdealName(targetPropId, propertyOrder)
-    } else if (!targetPropId) {
       const sourceBlock = blocks[sourceBlockId]
       const { propertyOrder } = sourceBlock.config.block
-      newID = targetPropId = findIdealName(sourcePropId, propertyOrder)
+      newId = sourcePropId = findIdealName(targetPropId, propertyOrder)
+    } else if (!targetPropId) {
+      const targetBlock = blocks[targetBlockId]
+      const { propertyOrder } = targetBlock.config.block
+      newId = targetPropId = findIdealName(sourcePropId, propertyOrder)
     }
 
     dispatch(

@@ -146,7 +146,22 @@ const GraphRenderer = props => {
         onConnectStart={onConnectStart}
         onConnectEnd={onConnectEnd}
         deleteKeyCode={[]}>
-        <Controls showInteractive={false} />
+        <Controls
+          showInteractive={false}
+          sx={{
+            boxShadow: '0 0 2px 1px rgb(255 255 255 / 8%)',
+            button: {
+              backgroundColor: 'surface',
+              borderBottomColor: 'surfaceHigh',
+              '&:hover': {
+                backgroundColor: 'surfaceHigh',
+              },
+            },
+            svg: {
+              fill: 'textSecondary',
+            },
+          }}
+        />
       </ReactFlow>
     </FlexBox>
   )
