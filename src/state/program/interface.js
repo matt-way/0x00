@@ -2,8 +2,9 @@ import { actions } from './model'
 
 function findIdealName(name, names) {
   let i = 1
-  while (names.includes(name)) {
-    name = `${name}${i}`
+  let ideal = name
+  while (names.includes(ideal)) {
+    ideal = `${name}${i}`
     i++
   }
   return name
@@ -16,11 +17,11 @@ export const createLink =
     let newId
     if (!sourcePropId) {
       const targetBlock = blocks[targetBlockId]
-      const { propertyOrder } = targetBlock.config.block.config
+      const { propertyOrder } = targetBlock.config.block
       newId = sourcePropId = findIdealName(targetPropId, propertyOrder)
     } else if (!targetPropId) {
       const sourceBlock = blocks[sourceBlockId]
-      const { propertyOrder } = sourceBlock.config.block.config
+      const { propertyOrder } = sourceBlock.config.block
       newID = targetPropId = findIdealName(sourcePropId, propertyOrder)
     }
 
