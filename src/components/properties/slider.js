@@ -10,6 +10,7 @@ const Slider = props => {
         background: `linear-gradient(90deg, #2f5b93 ${percent}%, #393939 ${percent}%)`,
         padding: '3px 5px',
         borderRadius: '5px',
+        cursor: 'pointer',
       }}
       onClick={e => {
         const ratio = e.nativeEvent.offsetX / e.target.clientWidth

@@ -1,13 +1,13 @@
 /** @jsxImportSource theme-ui */
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { typeMap } from '../properties'
-import { InputHub } from './input-hub'
-import { OutputHub } from './output-hub'
-import { useSetHubPosition } from './hub-position-context'
 import { useModalActions } from 'state/modals/hooks'
+import { useProgramActions } from 'state/program/hooks'
 import { modalIds } from 'state/modals/model'
 import { Flex } from 'components/system'
+import { Handle } from 'react-flow-renderer'
 import ContextMenu from 'electron-react-context-menu/renderer'
+import { DYNAMIC_HANDLE_ID } from './constants'
 
 const Property = props => {
   const {
@@ -15,38 +15,18 @@ const Property = props => {
     config = {},
     value,
     blockId,
-    blockX,
-    blockY,
+    incomingConnected,
+    outgoingConnected,
     updateValue,
-    onDrag,
-    onDrop,
     blockActions,
   } = props
   const { output, type } = config
   const domRef = useRef(null)
   const modalActions = useModalActions()
+  const programActions = useProgramActions()
 
-  const key = `${blockId}.${id}`
-  const setHubPosition = useSetHubPosition()
-
-  useEffect(() => {
-    // whenever a prop rerenders, it tells any subscribers to rerender as well
-    if (domRef.current) {
-      setHubPosition(key, {
-        x:
-          blockX +
-          domRef.current.offsetLeft +
-          (output ? domRef.current.offsetWidth : 0),
-        y:
-          blockY + (domRef.current.offsetTop + domRef.current.offsetHeight / 2),
-      })
-    }
-    return () => {
-      setHubPosition(key)
-    }
-  }, [blockX, blockY])
-
-  const InputProperty = typeMap[type || 'generic'].component
+  const propType = incomingConnected ? 'generic' : type || 'generic'
+  const PropertyType = typeMap[propType].component
 
   return (
     <ContextMenu
@@ -56,7 +36,7 @@ const Property = props => {
           click: () => {
             const offset = domRef.current.getBoundingClientRect()
             modalActions.openAt(
-              output ? modalIds.editOutputProperty : modalIds.editInputProperty,
+              modalIds.editProperty,
               { x: offset.left, y: offset.bottom },
               { blockId, propId: id }
             )
@@ -83,23 +63,61 @@ const Property = props => {
           height: '25px',
           padding: '0px 8px',
         }}>
-        {output ? (
-          <>
-            <div sx={{ width: '100%', textAlign: 'right' }}>{id}</div>
-            <OutputHub blockId={blockId} propId={id} onDrag={onDrag} />
-          </>
-        ) : (
-          <>
-            <InputProperty
-              id={id}
-              blockId={blockId}
-              config={config}
-              value={value}
-              updateValue={updateValue}
-            />
-            <InputHub onDrop={onDrop} blockId={blockId} propId={id} />
-          </>
-        )}
+        <PropertyType
+          id={id}
+          blockId={blockId}
+          config={config}
+          value={value}
+          updateValue={val => {
+            programActions.updatePropertyValue(blockId, id, val)
+          }}
+          incomingConnected={incomingConnected}
+          outgoingConnected={outgoingConnected}
+        />
+        <Handle
+          type="target"
+          position="left"
+          id={id}
+          isConnectable={true}
+          onConnect={params => {
+            const { source, target, sourceHandle, targetHandle } = params
+            const sourceProp =
+              sourceHandle === DYNAMIC_HANDLE_ID ? undefined : sourceHandle
+            if (source !== target) {
+              programActions.createLink(
+                source,
+                sourceProp,
+                target,
+                targetHandle
+              )
+            }
+          }}
+          style={{
+            borderColor: incomingConnected ? '#fff' : '#555',
+          }}
+        />
+        <Handle
+          type="source"
+          position="right"
+          id={id}
+          isConnectable={true}
+          onConnect={params => {
+            const { source, target, sourceHandle, targetHandle } = params
+            const targetProp =
+              targetHandle === DYNAMIC_HANDLE_ID ? undefined : targetHandle
+            if (source !== target) {
+              programActions.createLink(
+                source,
+                sourceHandle,
+                target,
+                targetProp
+              )
+            }
+          }}
+          sx={{
+            borderColor: outgoingConnected ? '#fff' : '#555',
+          }}
+        />
       </Flex>
     </ContextMenu>
   )

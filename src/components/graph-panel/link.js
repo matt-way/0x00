@@ -1,47 +1,56 @@
 /** @jsxImportSource theme-ui */
-import ContextMenu from 'electron-react-context-menu/renderer'
+import { getBezierPath } from 'react-flow-renderer'
+//import ContextMenu from 'electron-react-context-menu/renderer'
 
-const Link = props => {
-  const { id, sourceX, sourceY, targetX, targetY, removeLink } = props
-
+export default function CustomEdge({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  selected,
+}) {
+  const edgePath = getBezierPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+  })
   return (
-    <svg
-      sx={{
-        position: 'absolute',
-        width: '100%',
-        height: '100%',
-        pointerEvents: 'none',
-      }}>
-      <line
-        x1={sourceX}
-        y1={sourceY}
-        x2={targetX}
-        y2={targetY}
-        stroke="#ddd"
-        strokeWidth={1}
-        pointerEvents="all"
-      />
-      <ContextMenu
+    <>
+      {/*<ContextMenu
         menu={[
           {
             label: 'Remove Link',
             click: async () => {
-              removeLink()
+              console.log('removeLink()')
             },
           },
-        ]}>
-        <line
-          x1={sourceX}
-          y1={sourceY}
-          x2={targetX}
-          y2={targetY}
-          stroke="transparent"
-          strokeWidth={10}
-          pointerEvents="all"
-        />
-      </ContextMenu>
-    </svg>
+        ]}>*/}
+      <path
+        className="react-flow__edge-path"
+        style={{
+          stroke: 'transparent',
+          fill: 'none',
+          strokeWidth: 10,
+          cursor: 'pointer',
+        }}
+        d={edgePath}
+      />
+      {/*</ContextMenu>*/}
+      <path
+        id={id}
+        style={{
+          stroke: selected ? '#f90' : '#999',
+          cursor: 'pointer',
+        }}
+        className="react-flow__edge-path"
+        d={edgePath}
+      />
+    </>
   )
 }
-
-export default Link
