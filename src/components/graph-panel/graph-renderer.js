@@ -59,6 +59,32 @@ const GraphRenderer = props => {
     programActions.updateBlockPosition(id, position.x, position.y)
   }, [])
 
+  const onConnectStart = useCallback((e, params) => {
+    setNodes(ns =>
+      ns.map(n => ({
+        ...n,
+        data: {
+          ...n.data,
+          newConnection: params,
+        },
+      }))
+    )
+    console.log('connection starting!', params)
+  }, [])
+
+  const onConnectEnd = useCallback(params => {
+    console.log('connection ending!')
+    setNodes(ns =>
+      ns.map(n => ({
+        ...n,
+        data: {
+          ...n.data,
+          newConnection: undefined,
+        },
+      }))
+    )
+  }, [])
+
   const edgeSet = []
   Object.entries(blocks).forEach(([blockId, blockInstance]) => {
     Object.entries(blockInstance.outputLinks || {}).forEach(
@@ -117,6 +143,8 @@ const GraphRenderer = props => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeDragStop={onNodeDragStop}
+        onConnectStart={onConnectStart}
+        onConnectEnd={onConnectEnd}
         deleteKeyCode={[]}>
         <Controls showInteractive={false} />
       </ReactFlow>
@@ -125,7 +153,7 @@ const GraphRenderer = props => {
 }
 
 const DummyBlock = props => {
-  const { id, blockInstance, setNodes, setEdges } = props
+  const { id, blockInstance, setNodes } = props
   const [block] = useBlock(id)
 
   useEffect(() => {

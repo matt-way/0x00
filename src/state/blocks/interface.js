@@ -16,10 +16,12 @@ export const saveCode = blockId => (dispatch, getState) => {
   dispatch(actions.persistCode(blockId, formattedCode))
 }
 
-export const createProperty = (blockId, name, property) => dispatch => {
-  dispatch(actions.createProperty(blockId, name, property))
-  return name
-}
+export const createProperty =
+  (blockId, name, property = {}) =>
+  dispatch => {
+    dispatch(actions.createProperty(blockId, name, property))
+    return name
+  }
 export const updateProperty = actions.updateProperty
 export const removeProperty = actions.removeProperty
 export const unlock = actions.unlock

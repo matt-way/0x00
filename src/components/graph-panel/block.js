@@ -9,11 +9,12 @@ import { modalIds } from 'state/modals/model'
 import Property from './property'
 import ContextMenu from 'electron-react-context-menu/renderer'
 import { invoke } from 'ipc/renderer'
+import { DYNAMIC_HANDLE_ID } from './constants'
 
 const Block = props => {
   const { id, data, selected } = props
-  const { block, blockInstance, incomingLinks = {} } = data
-  console.log('rendering block:', id, Math.random())
+  const { block, blockInstance, incomingLinks = {}, newConnection } = data
+  console.log('rendering block:', id, newConnection)
   const blockActions = useBlockActions(id)
   const modalActions = useModalActions()
   const workspaceActions = useWorkspaceActions()
@@ -23,6 +24,7 @@ const Block = props => {
   const blockConfig = config.block || {}
   const { properties = {}, propertyOrder = [] } = blockConfig
   const { inputValues = {}, outputLinks = {} } = blockInstance
+  const { ...vars } = newConnection || {}
 
   return (
     <div
@@ -119,72 +121,86 @@ const Block = props => {
       <div
         sx={{
           display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
+          flexDirection: newConnection ? 'row' : 'column',
+          justifyContent: newConnection
+            ? newConnection.handleType === 'source'
+              ? 'flex-start'
+              : 'flex-end'
+            : 'center',
           alignItems: 'center',
           marginTop: '6px',
         }}>
-        <div
-          sx={{
-            display: 'flex',
-            width: '100%',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            borderWidth: '2px 0px 0px 0px',
-            borderStyle: 'solid',
-            borderColor: '#414141',
-            cursor: 'pointer',
-          }}
-          ref={propertyCreatorRef}
-          onClick={() => {
-            const offset = propertyCreatorRef.current.getBoundingClientRect()
-            modalActions.openAt(
-              modalIds.editProperty,
-              { x: offset.left, y: offset.top },
-              { blockId: id }
-            )
-          }}>
-          <Icon
+        {(!newConnection || newConnection.nodeId === id) && (
+          <div
             sx={{
-              display: 'block',
-              color: 'textSecondary',
-              width: '15px',
-              height: '15px',
+              display: 'flex',
+              width: '100%',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              borderWidth: '2px 0px 0px 0px',
+              borderStyle: 'solid',
+              borderColor: '#414141',
+              cursor: 'pointer',
             }}
-            type="plus"
-          />
-        </div>
+            ref={propertyCreatorRef}
+            onClick={() => {
+              const offset = propertyCreatorRef.current.getBoundingClientRect()
+              modalActions.openAt(
+                modalIds.editProperty,
+                { x: offset.left, y: offset.top },
+                { blockId: id }
+              )
+            }}>
+            <Icon
+              sx={{
+                display: 'block',
+                color: 'textSecondary',
+                width: '15px',
+                height: '15px',
+              }}
+              type="plus"
+            />
+          </div>
+        )}
+        {newConnection && newConnection.nodeId !== id && (
+          <Handle
+            id={DYNAMIC_HANDLE_ID}
+            type={newConnection.handleType === 'source' ? 'target' : 'source'}
+            position={newConnection.handleType === 'source' ? 'left' : 'right'}
+            isConnectable={true}
+            style={{
+              position: 'relative',
+              left: 0,
+              transform: 'none',
+              background: 'none',
+              width: 'auto',
+              height: 'auto',
+              borderWidth:
+                newConnection.handleType === 'source'
+                  ? '2px 2px 0px 0px'
+                  : '2px 0px 0px 2px',
+              borderRadius:
+                newConnection.handleType === 'source'
+                  ? '0px 5px 0px 0px'
+                  : '5px 0px 0px 0px',
+              borderStyle: 'solid',
+              borderColor: '#414141',
+            }}>
+            <Icon
+              sx={{
+                display: 'block',
+                color: 'textSecondary',
+                width: '15px',
+                height: '15px',
+                pointerEvents: 'none',
+              }}
+              type="plus"
+            />
+          </Handle>
+        )}
       </div>
     </div>
   )
-
-  /*
-  return (
-    <>
-      <Handle
-        type="target"
-        position="left"
-        style={{ background: '#555' }}
-        onConnect={params => console.log('handle onConnect', params)}
-        isConnectable={true}
-      />
-      <div>Block</div>
-      <Handle
-        type="source"
-        position="right"
-        id="a"
-        style={{ top: 10, background: '#555' }}
-        isConnectable={true}
-      />
-      <Handle
-        type="source"
-        position="right"
-        id="b"
-        style={{ bottom: 10, top: 'auto', background: '#555' }}
-        isConnectable={true}
-      />
-    </>
-  )*/
 }
 
 export default Block

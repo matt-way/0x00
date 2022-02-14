@@ -103,5 +103,31 @@ export const { actions, reducer, constants } = buildModel(
   },
   () => ({
     [programConstants.reset]: () => initialState(),
+    [programConstants.createLink]: (
+      blocks,
+      sourceBlockId,
+      targetBlockId,
+      sourcePropId,
+      targetPropId
+    ) => {
+      const { block: sourceBlock } = blocks[sourceBlockId].config
+      const { block: targetBlock } = blocks[targetBlockId].config
+
+      if (!sourceBlock.properties) {
+        sourceBlock.properties = {}
+      }
+      if (!sourceBlock.properties[sourcePropId]) {
+        sourceBlock.properties[sourcePropId] = {}
+        sourceBlock.propertyOrder.push(sourcePropId)
+      }
+
+      if (!targetBlock.properties) {
+        targetBlock.properties = {}
+      }
+      if (!targetBlock.properties[targetPropId]) {
+        targetBlock.properties[targetPropId] = {}
+        targetBlock.propertyOrder.push(targetPropId)
+      }
+    },
   })
 )

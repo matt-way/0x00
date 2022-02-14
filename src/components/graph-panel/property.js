@@ -7,6 +7,7 @@ import { modalIds } from 'state/modals/model'
 import { Flex } from 'components/system'
 import { Handle } from 'react-flow-renderer'
 import ContextMenu from 'electron-react-context-menu/renderer'
+import { DYNAMIC_HANDLE_ID } from './constants'
 
 const Property = props => {
   const {
@@ -80,10 +81,12 @@ const Property = props => {
           isConnectable={true}
           onConnect={params => {
             const { source, target, sourceHandle, targetHandle } = params
+            const sourceProp =
+              sourceHandle === DYNAMIC_HANDLE_ID ? undefined : sourceHandle
             if (source !== target) {
               programActions.createLink(
                 source,
-                sourceHandle,
+                sourceProp,
                 target,
                 targetHandle
               )
@@ -100,12 +103,14 @@ const Property = props => {
           isConnectable={true}
           onConnect={params => {
             const { source, target, sourceHandle, targetHandle } = params
+            const targetProp =
+              targetHandle === DYNAMIC_HANDLE_ID ? undefined : targetHandle
             if (source !== target) {
               programActions.createLink(
                 source,
                 sourceHandle,
                 target,
-                targetHandle
+                targetProp
               )
             }
           }}
