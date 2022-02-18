@@ -2,8 +2,8 @@
 import { useState } from 'state-management/hooks'
 import { useBlock } from 'state/blocks/hooks'
 import { useProgramActions } from 'state/program/hooks'
-import { Fragment } from 'react'
 import { PopMenu, Button, Select, Input } from 'components/system'
+import { Form, FormItem } from 'components/form'
 import { typeMap } from 'components/properties'
 
 const EditProperty = props => {
@@ -25,6 +25,9 @@ const EditProperty = props => {
 
   const [nameValue, setNameValue] = useState(propId || linkSourceId || '')
   const [dataType, setDataType] = useState(propertyConfig.type || 'generic')
+  const [typeSettings, setTypeSettings] = useState(propertyConfig.settings)
+
+  const TypeComponent = dataType && typeMap[dataType].component
 
   const onClose = () => {
     close()
@@ -42,61 +45,70 @@ const EditProperty = props => {
       sx={{
         minWidth: '200px',
       }}>
-      <div
+      <Form
         sx={{
-          display: 'flex',
-          flexDirection: 'row',
-          marginBottom: '4px',
+          gridTemplateColumns: '2fr 5fr',
         }}>
-        <div sx={{ flex: 1 }}>Name</div>
-        <Input
-          value={nameValue}
-          onChange={e => setNameValue(e.target.value)}
-          sx={{
-            flex: 1.5,
-            color:
-              propertyOrder.indexOf(nameValue) >= 0 && nameValue !== propId
-                ? 'red'
-                : undefined,
-          }}
-          focusOnMount={focusOnMount}
+        <FormItem
+          label="Name"
+          control={
+            <Input
+              value={nameValue}
+              onChange={e => setNameValue(e.target.value)}
+              sx={{
+                color:
+                  propertyOrder.indexOf(nameValue) >= 0 && nameValue !== propId
+                    ? 'red'
+                    : undefined,
+              }}
+              focusOnMount={focusOnMount}
+            />
+          }
         />
-      </div>
+        <FormItem
+          label="Data Type"
+          control={
+            <Select
+              sx={{
+                width: '100%',
+              }}
+              options={Object.keys(typeMap).map(t => ({
+                key: t,
+                text: typeMap[t].label,
+              }))}
+              value={dataType}
+              onChange={event => {
+                setDataType(event.target.value)
+              }}
+            />
+          }
+        />
+      </Form>
       <div
         sx={{
-          display: 'flex',
-          flexDirection: 'row',
+          width: '100%',
+          height: 0,
+          marginTop: '8px',
           marginBottom: '8px',
-        }}>
-        <div
-          sx={{
-            flex: 1,
-          }}>
-          Data Type
-        </div>
-        <Select
-          sx={{
-            flex: 1.5,
-          }}
-          options={Object.keys(typeMap).map(t => ({
-            key: t,
-            text: typeMap[t].label,
-          }))}
-          value={dataType}
-          onChange={event => {
-            setDataType(event.target.value)
-          }}
+          borderTop: '1px solid #414141',
+        }}
+      />
+      {TypeComponent && TypeComponent.settings && (
+        <TypeComponent.settings
+          settings={typeSettings}
+          updateSettings={setTypeSettings}
         />
-        {/*<div>Custom Options Per Data Type</div>*/}
-      </div>
+      )}
       <div
         sx={{
           textAlign: 'right',
+          marginTop: '8px',
         }}>
         <Button
           onClick={async e => {
             const newConfig = {
               ...propertyConfig,
+              settings: typeSettings,
             }
 
             if (dataType !== 'generic') {

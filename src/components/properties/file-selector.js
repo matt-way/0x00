@@ -14,6 +14,9 @@ const FileSelector = props => {
         {id}
       </span>
       <Button
+        sx={{
+          fontSize: 11,
+        }}
         onClick={async () => {
           const path = await invoke.properties.selectFile()
           if (path) {
