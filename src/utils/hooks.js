@@ -35,10 +35,9 @@ export const useClickOutside = onClick => {
   const ref = useRef(null)
 
   const handleClickOutside = event => {
-    console.log(ref.current, event.target)
-    /*if (ref.current && !ref.current.contains(event.target)) {
+    if (ref.current && !ref.current.contains(event.target)) {
       onClick(event)
-    }*/
+    }
   }
 
   useEffect(() => {
