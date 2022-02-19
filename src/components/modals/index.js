@@ -41,8 +41,14 @@ const Modals = props => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
+        zIndex: 100,
       }}
-      onClick={() => modalsActions.close()}>
+      onClick={e => {
+        e.stopPropagation()
+        if (e.currentTarget === e.target) {
+          modalsActions.close()
+        }
+      }}>
       <Modal
         left={modals?.position?.x}
         top={modals?.position?.y}
