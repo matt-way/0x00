@@ -1,16 +1,10 @@
 /** @jsxImportSource theme-ui */
-import { useState } from 'react'
-import { SketchPicker } from 'react-color'
-import { useClickOutside } from 'utils/hooks'
+import { useModalActions } from 'state/modals/hooks'
+import { modalIds } from 'state/modals/model'
 
 const Color = props => {
-  const { id, value, updateValue } = props
-  const [showPicker, setShowPicker] = useState(false)
-
-  const ref = useClickOutside(e => {
-    e.stopPropagation()
-    setShowPicker(false)
-  })
+  const { id, blockId, value, updateValue } = props
+  const modalActions = useModalActions()
 
   return (
     <div>
@@ -23,7 +17,7 @@ const Color = props => {
       <div
         sx={{
           display: 'inline-block',
-          backgroundColor: value,
+          backgroundColor: value.hex,
           border: '1px solid #424242',
           width: '40px',
           height: '15px',
@@ -33,27 +27,14 @@ const Color = props => {
         onClick={e => {
           e.preventDefault()
           e.stopPropagation()
-          setShowPicker(true)
-        }}>
-        {showPicker && (
-          <SketchPicker
-            ref={ref}
-            styles={{
-              default: {
-                picker: {
-                  boxShadow: 'none',
-                  backgroundColor: '#1d1d1d',
-                },
-              },
-            }}
-            disableAlpha
-            width={150}
-            presetColors={[]}
-            color={value}
-            onChangeComplete={color => updateValue(color.hex)}
-          />
-        )}
-      </div>
+          const offset = e.currentTarget.getBoundingClientRect()
+          modalActions.openAt(
+            modalIds.colorPicker,
+            { x: offset.left, y: offset.top },
+            { blockId, propId: id }
+          )
+        }}
+      />
     </div>
   )
 }

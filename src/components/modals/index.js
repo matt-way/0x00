@@ -8,6 +8,7 @@ import Confirmation from './confirmation'
 import EditBlockInformation from './edit-block-information'
 import Auth from './auth'
 import { modalIds } from 'state/modals/model'
+import ColorPicker from './color-picker'
 
 const lookup = {
   [modalIds.intro]: Intro,
@@ -17,6 +18,7 @@ const lookup = {
   [modalIds.confirmation]: Confirmation,
   [modalIds.editBlockInformation]: EditBlockInformation,
   [modalIds.auth]: Auth,
+  [modalIds.colorPicker]: ColorPicker,
 }
 
 const Modals = props => {
@@ -39,7 +41,8 @@ const Modals = props => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-      }}>
+      }}
+      onClick={() => modalsActions.close()}>
       <Modal
         left={modals?.position?.x}
         top={modals?.position?.y}

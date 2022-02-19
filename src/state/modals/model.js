@@ -8,6 +8,7 @@ export const modalIds = {
   confirmation: 'confirmation',
   editBlockInformation: 'editBlockInformation',
   auth: 'auth',
+  colorPicker: 'colorPicker',
 }
 
 const initialState = () => ({

@@ -188,7 +188,6 @@ const DummyBlock = props => {
     ])
 
     return () => {
-      console.log('removing dummy block', id)
       setNodes(ns => ns.filter(n => n.id !== id))
     }
   }, [])

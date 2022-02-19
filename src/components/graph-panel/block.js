@@ -14,7 +14,6 @@ import { DYNAMIC_HANDLE_ID } from './constants'
 const Block = props => {
   const { id, data, selected } = props
   const { block, blockInstance, incomingLinks = {}, newConnection } = data
-  console.log('rendering block:', id, newConnection)
   const blockActions = useBlockActions(id)
   const modalActions = useModalActions()
   const workspaceActions = useWorkspaceActions()
@@ -24,7 +23,6 @@ const Block = props => {
   const blockConfig = config.block || {}
   const { properties = {}, propertyOrder = [] } = blockConfig
   const { inputValues = {}, outputLinks = {} } = blockInstance
-  const { ...vars } = newConnection || {}
 
   return (
     <div
@@ -107,9 +105,6 @@ const Block = props => {
             config={properties[propId]}
             value={inputValues[propId]}
             blockId={id}
-            updateValue={newValue =>
-              onPropertyValueUpdated(id, propId, newValue)
-            }
             blockActions={blockActions}
             incomingConnected={incomingLinks[propId]}
             outgoingConnected={
