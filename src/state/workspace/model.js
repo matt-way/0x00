@@ -21,8 +21,21 @@ export const { constants, actions, reducer } = buildModel(
   () => ({
     [programConstants.reset]: () => initialState(),
     [blockConstants.remove]: (workspace, blockId) => {
-      if ((workspace.selectedBlockId = blockId)) {
+      if (workspace.selectedBlockId === blockId) {
         workspace.selectedBlockId = null
+      }
+    },
+    [blockConstants.load]: (
+      workspace,
+      blockId,
+      name,
+      path,
+      config,
+      code,
+      dependencies
+    ) => {
+      if (!workspace.selectedBlockId) {
+        workspace.selectedBlockId = blockId
       }
     },
   })
