@@ -18,12 +18,14 @@ const PopMenu = props => {
         zIndex: 99999,
       }}
       className={className}>
-      <div
-        sx={{
-          marginBottom: '16px',
-        }}>
-        {title}
-      </div>
+      {title && (
+        <div
+          sx={{
+            marginBottom: '16px',
+          }}>
+          {title}
+        </div>
+      )}
       {onClose && (
         <Icon
           sx={{

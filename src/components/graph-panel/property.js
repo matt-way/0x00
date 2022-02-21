@@ -17,7 +17,6 @@ const Property = props => {
     blockId,
     incomingConnected,
     outgoingConnected,
-    updateValue,
     blockActions,
   } = props
   const { output, type } = config

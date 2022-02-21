@@ -21,7 +21,7 @@ const edgeTypes = {
 }
 
 const GraphRenderer = props => {
-  const { program, programActions } = props
+  const { program, programActions, selectedBlockId } = props
   const { blocks } = program
 
   const [nodes, setNodes] = useState([])
@@ -124,6 +124,7 @@ const GraphRenderer = props => {
           blockInstance={block}
           setNodes={setNodes}
           setEdges={setEdges}
+          selected={id === selectedBlockId}
         />
       ))}
       {edgeSet.map(edge => (
@@ -168,7 +169,7 @@ const GraphRenderer = props => {
 }
 
 const DummyBlock = props => {
-  const { id, blockInstance, setNodes } = props
+  const { id, blockInstance, setNodes, selected } = props
   const [block] = useBlock(id)
 
   useEffect(() => {
@@ -184,14 +185,14 @@ const DummyBlock = props => {
         },
         draggable: true,
         dragHandle: '.block-header',
+        selected,
       },
     ])
 
     return () => {
-      console.log('removing dummy block', id)
       setNodes(ns => ns.filter(n => n.id !== id))
     }
-  }, [])
+  }, [selected])
 
   useEffect(() => {
     setNodes(ns =>
