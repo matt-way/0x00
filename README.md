@@ -4,7 +4,7 @@
 
 ## What is this?
 
-Null is a new type of javascript IDE whose goal is to help you get your ideas to working code as fast as possible. It borrows elements from all sorts of different coding environments, but they key features are:
+Null is a new type of javascript IDE whose goal is to help you get your ideas to working code as fast as possible. It borrows elements from all sorts of different coding environments, but the key features are:
 
 - Code is data driven, responding to changes from other code blocks.
 - Code blocks have a persistent state, so you can change and run your code on the fly.
