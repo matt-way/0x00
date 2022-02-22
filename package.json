@@ -8,7 +8,7 @@
   },
   "devDependencies": {
     "@babel/preset-env": "^7.15.8",
-    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.1",
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.4",
     "babel-loader": "^8.2.2",
     "css-loader": "^6.5.1",
     "electron-devtools-installer": "^3.2.0",
@@ -18,7 +18,7 @@
     "style-loader": "^3.3.1",
     "webpack": "^5.58.1",
     "webpack-cli": "^4.9.0",
-    "webpack-dev-server": "^3.11.2"
+    "webpack-dev-server": "^4.7.4"
   },
   "dependencies": {
     "@babel/core": "^7.15.8",
@@ -33,7 +33,7 @@
     "babel-plugin-inline-import": "^3.0.0",
     "browserify": "^17.0.0",
     "builtin-modules": "^3.2.0",
-    "chokidar": "^3.5.2",
+    "chokidar": "^3.5.3",
     "double-ended-queue": "^2.1.0-0",
     "electron": "^15.3.0",
     "electron-fetch": "^1.7.4",

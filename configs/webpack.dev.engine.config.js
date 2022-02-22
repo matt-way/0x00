@@ -44,7 +44,9 @@ module.exports = {
     extensions: ['.js', '.jsx'],
   },
   devServer: {
-    contentBase: './src/engine',
+    static: {
+      directory: './src/engine',
+    },
     hot: true,
     port: 5000,
   },

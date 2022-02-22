@@ -48,7 +48,9 @@ module.exports = {
     extensions: ['.js', '.jsx'],
   },
   devServer: {
-    contentBase: './src/ui',
+    static: {
+      directory: './src/ui',
+    },
     hot: true,
   },
 }
