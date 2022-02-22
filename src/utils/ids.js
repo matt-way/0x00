@@ -1,10 +1,12 @@
-import shortid from 'shortid'
+import { nanoid } from 'nanoid'
+
+const ID_LENGTH = 10
 
 const generateId = prefix => {
   if (prefix) {
-    return `${prefix}-${shortid.generate()}`
+    return `${prefix}-${nanoid(ID_LENGTH)}`
   } else {
-    return shortid.generate()
+    return nanoid(ID_LENGTH)
   }
 }
 
