@@ -84,6 +84,10 @@ app.whenReady().then(() => {
     }
   })
 
+  subscribe('program.path', programPath => {
+    mainWindow.setTitle(`${app.getName()} - ${programPath}`)
+  })
+
   subscribe('program.reloadEngine', () => {
     console.log('reloading engine!')
     reloadEngine()

@@ -192,7 +192,7 @@ const DummyBlock = props => {
     return () => {
       setNodes(ns => ns.filter(n => n.id !== id))
     }
-  }, [selected])
+  }, [])
 
   useEffect(() => {
     setNodes(ns =>
@@ -200,6 +200,7 @@ const DummyBlock = props => {
         if (n.id === id) {
           return {
             ...n,
+            selected,
             data: {
               ...n.data,
               block,
@@ -209,7 +210,7 @@ const DummyBlock = props => {
         return n
       })
     )
-  }, [block])
+  }, [block, selected])
 
   useEffect(() => {
     setNodes(ns =>
