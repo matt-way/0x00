@@ -1,5 +1,4 @@
 import requireFromString from 'require-from-string'
-import Markdown from 'marli'
 import { join } from 'path'
 import { subscribe, unsubscribe } from 'state-management/watcher'
 import {
@@ -13,8 +12,8 @@ import {
 import { transpile } from './transpile'
 import { TSON } from 'utils/typson'
 import { writeFile, readFile } from 'fs-extra'
+import { md } from 'utils/markdown-literal'
 
-const md = Markdown()
 const blocks = {}
 
 // shallow link object comparer
@@ -309,9 +308,7 @@ function runBlock(id, hash, yieldValue, currentTime) {
       // md literal function
       (...args) => {
         const mdDom = md(...args)
-        domContainer.innerHTML = ''
-        domContainer.appendChild(mdDom)
-        return mdDom
+        domContainer.innerHTML = mdDom
       },
       // require css files function
       function (relPath) {
