@@ -1,5 +1,4 @@
 import requireFromString from 'require-from-string'
-import Markdown from 'marli'
 import { join } from 'path'
 import { subscribe, unsubscribe } from 'state-management/watcher'
 import {
@@ -309,9 +308,9 @@ function runBlock(id, hash, yieldValue, currentTime) {
       // md literal function
       (...args) => {
         const mdDom = md(...args)
-        domContainer.innerHTML = ''
-        domContainer.appendChild(mdDom)
-        return mdDom
+        domContainer.innerHTML = mdDom
+        //domContainer.appendChild(mdDom)
+        //return mdDom
       },
       // require css files function
       function (relPath) {
