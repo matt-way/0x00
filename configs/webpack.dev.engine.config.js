@@ -1,4 +1,3 @@
-const path = require('path')
 const ReactRefreshPlugin = require('@pmmmwh/react-refresh-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 
@@ -8,6 +7,7 @@ module.exports = {
   target: 'electron-renderer',
   devtool: 'source-map',
   module: {
+    exprContextCritical: false, // supress critical warning for require-resolve
     rules: [
       {
         test: /\.jsx?$/,
