@@ -12,8 +12,8 @@ import {
 import { transpile } from './transpile'
 import { TSON } from 'utils/typson'
 import { writeFile, readFile } from 'fs-extra'
+import { md } from 'utils/markdown-literal'
 
-const md = Markdown()
 const blocks = {}
 
 // shallow link object comparer
@@ -309,8 +309,6 @@ function runBlock(id, hash, yieldValue, currentTime) {
       (...args) => {
         const mdDom = md(...args)
         domContainer.innerHTML = mdDom
-        //domContainer.appendChild(mdDom)
-        //return mdDom
       },
       // require css files function
       function (relPath) {

@@ -1,3 +1,7 @@
-const MarkdownIt = require('markdown-it')
+import MarkdownIt from 'markdown-it'
 
-const md = MarkdownIt('commonmark')
+const mdInstance = MarkdownIt()
+
+export const md = (...args) => {
+  return mdInstance.render(String.raw(...args))
+}
