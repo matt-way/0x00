@@ -12,7 +12,7 @@ const EngineControls = props => {
     <div
       sx={{
         backgroundColor: 'surface',
-        marginTop: '3px',
+        marginTop: workspace.enginePanelAttached ? '3px' : '0px',
         borderRadius: '5px 5px 0px 0px',
         borderBottomWidth: '2px',
         borderBottomStyle: 'solid',

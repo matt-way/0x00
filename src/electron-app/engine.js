@@ -2,7 +2,6 @@ import { BrowserWindow, BrowserView } from 'electron'
 import { join } from './disk/path'
 import { handle } from 'ipc/main'
 import ipcConstants from 'ipc/constants'
-//import store from './store'
 
 var engineWindow, engineView
 var attached = true
@@ -34,7 +33,9 @@ export function initialiseEngineWindow(mainWindow) {
     }
   })
 
-  handle(ipcConstants.engine.setBounds, rect => engineView.setBounds(rect))
+  handle(ipcConstants.engine.setBounds, rect => {
+    engineView.setBounds(rect)
+  })
 }
 
 export function detachEngine(mainWindow) {
@@ -45,24 +46,22 @@ export function detachEngine(mainWindow) {
     height: 1000,
     backgroundColor: '#fff',
     autoHideMenuBar: true,
-    title: 'Engine',
+    title: '0x00 Engine',
     webPreferences: {},
     icon: join(__dirname, '../../assets/logo/64x64.png'),
   })
 
-  // this must be ran in order for events to be triggered for browserwindow
-  engineWindow.loadFile('../engine/index.html')
+  engineWindow.setBrowserView(engineView)
+  engineView.setBounds({ x: 0, y: 0, width: 1000, height: 1000 })
+  engineView.setAutoResize({ width: true, height: true })
 
-  engineWindow.once('ready-to-show', () => {
-    engineWindow.setBrowserView(engineView)
-    engineView.setBounds({ x: 0, y: 0, width: 1000, height: 1000 })
-    engineView.setAutoResize({ width: true, height: true })
-  })
+  engineWindow.loadFile('../engine/index.html')
 }
 
-export function attachEngine(mainWindow) {
+export async function attachEngine(mainWindow) {
   mainWindow.setBrowserView(engineView)
   engineWindow.close()
+  //engineView.webContents.setBackgroundThrottling(true)
 }
 
 export function reloadEngine() {

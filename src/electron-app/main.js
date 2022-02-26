@@ -28,6 +28,7 @@ function createWindow() {
     height: 900,
     backgroundColor: '#0f1618',
     icon: join(__dirname, '../../assets/logo/64x64.png'),
+    show: false,
   })
 
   // and load the index.html of the app.
@@ -36,6 +37,9 @@ function createWindow() {
   // Open the DevTools.
   //mainWindow.webContents.openDevTools()
   mainWindow.once('ready-to-show', () => {
+    // this is necessary to fix cached zoom factor issues
+    mainWindow.webContents.setZoomFactor(1)
+    mainWindow.show()
     initialiseEngineWindow(mainWindow)
   })
 }
