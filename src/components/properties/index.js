@@ -1,6 +1,7 @@
 import Generic from './generic'
 import Text from './text'
 import Number from './number'
+import Checkbox from './checkbox'
 import Color from './color'
 import Slider from './slider'
 import FileSelector from './file-selector'
@@ -21,6 +22,10 @@ export const typeMap = {
   number: {
     component: Number,
     label: 'Number',
+  },
+  checkbox: {
+    component: Checkbox,
+    label: 'Checkbox',
   },
   color: {
     component: Color,

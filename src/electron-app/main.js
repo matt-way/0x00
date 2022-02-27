@@ -39,6 +39,7 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => {
     // this is necessary to fix cached zoom factor issues
     mainWindow.webContents.setZoomFactor(1)
+    mainWindow.maximize()
     mainWindow.show()
     initialiseEngineWindow(mainWindow)
   })
