@@ -22,6 +22,7 @@ const lookup = {
 }
 
 const Modals = props => {
+  const { clickAway } = props
   const [modals, modalsActions] = useModals()
 
   if (!modals.openId) {
@@ -45,7 +46,7 @@ const Modals = props => {
       }}
       onClick={e => {
         e.stopPropagation()
-        if (e.currentTarget === e.target) {
+        if (clickAway && e.currentTarget === e.target) {
           modalsActions.close()
         }
       }}>

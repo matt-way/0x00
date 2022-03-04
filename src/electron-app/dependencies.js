@@ -59,7 +59,7 @@ async function requestPackager(url, method = 'GET', retries = 0) {
     const manifest = await callApi(url, method)
     return manifest
   } catch (err) {
-    console.error({ err })
+    console.error({ err, url, method })
 
     // If it's a 403 or network error, we retry the fetch
     if (err.response && err.statusCode !== 403) {
@@ -89,9 +89,7 @@ async function getDependency(depName, version) {
     const bucketManifest = await callApi(fullUrl)
     return bucketManifest
   } catch (e) {
-    const packagerRequestUrl = encodeURIComponent(
-      `${PACKAGER_URL}/${depName}@${version}`
-    )
+    const packagerRequestUrl = `${PACKAGER_URL}/${depName}@${version}`
     await requestPackager(packagerRequestUrl, 'POST')
 
     return requestPackager(fullUrl)

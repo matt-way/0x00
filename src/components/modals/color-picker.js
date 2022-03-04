@@ -11,9 +11,9 @@ const ColorPicker = props => {
 
   return (
     <PopMenu
+      clickAway
       left={left}
       top={top}
-      //onClose={() => close()}
       sx={{
         padding: 0,
       }}>

@@ -74,24 +74,25 @@ Object.defineProperty(Module.prototype, 'require', {
       // attempting to load a relative path
       const parentPath = path.dirname(parentParts.join('/'))
       codePath = `/${joinSep(parentPath, moduleName)}`
-      if (codePath[codePath.length - 1] === '/') {
-        codePath += 'index.js'
-      }
     }
 
-    const extension = path.extname(codePath)
-    if (!extension) {
-      codePath += '.js'
+    const potentialPaths = [codePath]
+    if (codePath[codePath.length - 1] === '/') {
+      potentialPaths.push(codePath + 'index.js')
+    } else if (!path.extname(codePath)) {
+      potentialPaths.push(codePath + '.js')
+      potentialPaths.push(codePath + '/index.js')
     }
 
-    if (!contents[codePath]) {
+    const validPath = potentialPaths.find(p => contents[p])
+    if (!validPath) {
       throw new Error(
         `Unable to find module path ${codePath}, for parent module ${parentModule}`
       )
     }
 
-    const code = contents[codePath].content
-    return requireFromString(code, `${blockId}/${parentModule}${codePath}`)
+    const code = contents[validPath].content
+    return requireFromString(code, `${blockId}/${parentModule}${validPath}`)
   },
 })
 
