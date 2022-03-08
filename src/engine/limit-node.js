@@ -1,13 +1,14 @@
 import Module from 'module'
 import path from 'path'
 import builtinModules from 'builtin-modules'
-import requireFromString from 'require-from-string'
+import { requireCode } from './require-system'
 
 const MODULES_FOLDER = '/node_modules/'
 
 const oldRequire = Module.prototype.require
 
 let store
+let moduleStack = []
 
 const joinSep = (...args) => {
   return path.join(...args).replace(/\\/g, '/')
@@ -15,6 +16,7 @@ const joinSep = (...args) => {
 
 Object.defineProperty(Module.prototype, 'require', {
   value: function require(moduleName) {
+    let primaryModule = false
     const primaryName = moduleName.split(':')[1] || moduleName
     if (
       builtinModules.indexOf(primaryName) >= 0 ||
@@ -24,7 +26,7 @@ Object.defineProperty(Module.prototype, 'require', {
       return oldRequire(moduleName)
     }
 
-    console.log(`Attempting require of ${moduleName}`)
+    //console.log(`Attempting require of ${moduleName}`)
     const moduleParts = moduleName.split('/')
     const parentParts = this.filename.split('/')
     const blockId = parentParts.shift()
@@ -48,7 +50,12 @@ Object.defineProperty(Module.prototype, 'require', {
     }
 
     const { dependencies } = store.getState().blocks[blockId]
-    const { contents } = dependencies[parentModule]
+
+    if (!dependencies[parentModule]) {
+      throw new Error('Module not found: ' + moduleName)
+    }
+
+    const { contents, dependencyAliases } = dependencies[parentModule]
 
     // we need to figure out if the module is relative, absolute, or a root package
     let codePath
@@ -57,6 +64,17 @@ Object.defineProperty(Module.prototype, 'require', {
         moduleParts.length === 1 ||
         (moduleName[0] === '@' && moduleParts.length === 2)
       ) {
+        // figure out if the required module has an aliased name to use
+        if (dependencyAliases && moduleStack.length > 0) {
+          const parentName = moduleStack[moduleStack.length - 1]
+          if (
+            dependencyAliases[parentName] &&
+            dependencyAliases[parentName][moduleName]
+          ) {
+            moduleName = dependencyAliases[parentName][moduleName]
+          }
+        }
+
         // attempting to load a base package
         // get the package json and figure out the main path to load
         const packagePath = `${MODULES_FOLDER}${moduleName}/package.json`
@@ -66,6 +84,9 @@ Object.defineProperty(Module.prototype, 'require', {
           moduleName,
           packageJson.module || packageJson.main || 'index.js'
         )
+
+        moduleStack.push(moduleName)
+        primaryModule = true
       } else {
         // attempting to load an absolute file path
         codePath = joinSep(MODULES_FOLDER, moduleName)
@@ -82,6 +103,8 @@ Object.defineProperty(Module.prototype, 'require', {
     } else if (!path.extname(codePath)) {
       potentialPaths.push(codePath + '.js')
       potentialPaths.push(codePath + '/index.js')
+    } else if (path.extname(codePath) !== '.js') {
+      potentialPaths.push(codePath + '.js')
     }
 
     const validPath = potentialPaths.find(p => contents[p])
@@ -92,7 +115,17 @@ Object.defineProperty(Module.prototype, 'require', {
     }
 
     const code = contents[validPath].content
-    return requireFromString(code, `${blockId}/${parentModule}${validPath}`)
+    const result = requireCode(
+      blockId,
+      `${blockId}/${parentModule}${validPath}`,
+      code
+    )
+
+    if (primaryModule) {
+      moduleStack.pop()
+    }
+
+    return result
   },
 })
 

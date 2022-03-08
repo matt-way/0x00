@@ -78,3 +78,12 @@ export const transpile = (
 
   return transform(wrappedCode, options)
 }
+
+export const esToCjs = (
+  code,
+  options = {
+    plugins: [importExport],
+  }
+) => {
+  return transform(code, options)
+}

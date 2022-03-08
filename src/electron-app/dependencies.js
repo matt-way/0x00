@@ -130,9 +130,11 @@ export const installDependency = async (depName, version) => {
     const packageJson = JSON.parse(
       (dep.contents[`/node_modules/${depName}/package.json`] || {}).content
     )
+    // for now lets just transpile everything for import/export
+    // TODO: be smarter about which files to transpile, looking through all package.json files
     if (packageJson && (packageJson.module || packageJson.type === 'module')) {
       Object.keys(dep.contents)
-        .filter(file => file.endsWith('.js'))
+        .filter(file => file.endsWith('.js') || file.endsWith('.mjs'))
         .forEach(file => {
           dep.contents[file].content = transform(dep.contents[file].content, {
             plugins: [importExport],

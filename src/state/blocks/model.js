@@ -83,7 +83,6 @@ export const { actions, reducer, constants } = buildModel(
       if (!block.dependencies) {
         block.dependencies = {}
       }
-      console.log('completed', packageName, manifest)
       block.dependencies[packageName] = manifest
     },
     installDependencyError: (blocks, blockId, packageName, error) => {

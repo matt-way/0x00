@@ -27,6 +27,7 @@ async function start() {
     applyMiddleware(thunk, forwardActionsToMain)
   )
   const store = createStore(reducer, initialState, enhancer)
+  window.store = store
 
   handleMainActions(store)
   startWatcher(store)
