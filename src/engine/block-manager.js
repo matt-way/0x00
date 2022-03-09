@@ -259,6 +259,12 @@ function processPostLinks(block) {
 
 function runBlock(id, hash, yieldValue, currentTime) {
   const block = blocks[id]
+
+  if (!block) {
+    // TODO: this is a catch all, but we should rectify these and be more deterministic
+    return
+  }
+
   block.dormant = false
 
   if (!block.running) {
