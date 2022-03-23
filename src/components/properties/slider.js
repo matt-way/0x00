@@ -7,7 +7,7 @@ const Slider = props => {
   const { settings = {} } = config
   const { min = 0, max = 1, defaultValue = 0 } = settings
 
-  const percent = ((value ?? defaultValue) / (max - min) + min) * 100
+  const percent = (((value ?? defaultValue) - min) / (max - min)) * 100
 
   return (
     <div
