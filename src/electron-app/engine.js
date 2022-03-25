@@ -21,7 +21,7 @@ export function initialiseEngineWindow(mainWindow) {
   mainWindow.setBrowserView(engineView)
   engineView.setAutoResize({ width: false, height: false })
   //engineView.webContents.loadURL(path.join(__dirname, 'engine/index.html'))
-  engineView.webContents.loadURL('http://localhost:5000')
+  engineView.webContents.loadURL('http://localhost:3099')
   engineView.webContents.openDevTools()
 
   // the below fixes a bug related to crashing when using browserviews
