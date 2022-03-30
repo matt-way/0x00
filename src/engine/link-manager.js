@@ -31,7 +31,12 @@ function addUpdateLink(
 }
 
 function removeLink(sourceBlockId, sourcePropId, targetBlockId, targetPropId) {
-  if (incomingLinks[targetBlockId]) {
+  if (
+    incomingLinks[targetBlockId] &&
+    incomingLinks[targetBlockId][targetPropId].sourceBlockId ===
+      sourceBlockId &&
+    incomingLinks[targetBlockId][targetPropId].sourcePropId === sourcePropId
+  ) {
     delete incomingLinks[targetBlockId][targetPropId]
   }
   if (outgoingLinks[sourceBlockId]) {
