@@ -110,6 +110,7 @@ const Block = props => {
             outgoingConnected={
               outputLinks[propId] && outputLinks[propId].length > 0
             }
+            blockPath={block.path}
           />
         )
       })}

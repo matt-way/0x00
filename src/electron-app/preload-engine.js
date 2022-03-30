@@ -28,5 +28,6 @@ window.electronReduxIPC = {
 
 // file properties require a custom solution for access
 window.properties = {
-  selectFile: () => ipcRenderer.invoke(ipcConstants.properties.selectFile),
+  selectFile: blockPath =>
+    ipcRenderer.invoke(ipcConstants.properties.selectFile, blockPath),
 }

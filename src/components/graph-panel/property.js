@@ -18,6 +18,7 @@ const Property = props => {
     incomingConnected,
     outgoingConnected,
     blockActions,
+    blockPath,
   } = props
   const { output, type } = config
   const domRef = useRef(null)
@@ -65,6 +66,7 @@ const Property = props => {
         <PropertyType
           id={id}
           blockId={blockId}
+          blockPath={blockPath}
           config={config}
           value={value}
           updateValue={val => {

@@ -37,7 +37,7 @@ function removeLink(sourceBlockId, sourcePropId, targetBlockId, targetPropId) {
   if (outgoingLinks[sourceBlockId]) {
     const outgoingSet = outgoingLinks[sourceBlockId][sourcePropId]
     const linkIndex = outgoingSet.findIndex(
-      (link) =>
+      link =>
         link.targetBlockId === targetBlockId &&
         link.targetPropId === targetPropId
     )
@@ -48,11 +48,11 @@ function removeLink(sourceBlockId, sourcePropId, targetBlockId, targetPropId) {
 function removeAllLinks(blockId) {
   delete incomingLinks[blockId]
   delete outgoingLinks[blockId]
-  Object.keys(outgoingLinks).forEach((id) => {
+  Object.keys(outgoingLinks).forEach(id => {
     const outBlock = outgoingLinks[id]
-    Object.keys(outBlock).forEach((propId) => {
+    Object.keys(outBlock).forEach(propId => {
       const outLinks = outBlock[propId]
-      outBlock[propId] = outLinks.filter((l) => l.targetBlockId !== blockId)
+      outBlock[propId] = outLinks.filter(l => l.targetBlockId !== blockId)
     })
   })
 }

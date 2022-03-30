@@ -29,5 +29,6 @@ contextBridge.exposeInMainWorld('electronReduxIPC', {
 
 // file properties require a custom solution for access
 contextBridge.exposeInMainWorld('properties', {
-  selectFile: () => ipcRenderer.invoke(ipcConstants.properties.selectFile),
+  selectFile: blockPath =>
+    ipcRenderer.invoke(ipcConstants.properties.selectFile, blockPath),
 })

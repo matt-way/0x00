@@ -21,7 +21,7 @@ const fileString = str => {
 }
 
 const FileSelector = props => {
-  const { id, value, updateValue } = props
+  const { id, value, updateValue, blockPath } = props
   return (
     <div>
       <span
@@ -35,7 +35,7 @@ const FileSelector = props => {
           fontSize: 11,
         }}
         onClick={async () => {
-          const path = await invoke.properties.selectFile()
+          const path = await invoke.properties.selectFile(blockPath)
           if (path) {
             updateValue(path)
           }

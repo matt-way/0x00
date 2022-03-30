@@ -1,5 +1,5 @@
 import requireFromString from 'require-from-string'
-import { join } from 'path'
+import { join, isAbsolute } from 'path'
 import { subscribe, unsubscribe } from 'state-management/watcher'
 import {
   addUpdateLink,
@@ -147,12 +147,23 @@ function createBlock(id, block, program) {
   blocks[id].events.push(
     subscribe(
       `program.config.blocks.${id}.inputValues`,
-      (newValues, prevValues) => {
-        //let shouldUpdate = false
+      (newValues, prevValues, state) => {
         Object.keys(newValues).forEach(propId => {
           if (newValues[propId] !== prevValues?.[propId]) {
-            blocks[id].stateProxy[propId] = newValues[propId]
-            //shouldUpdate = true
+            // if the property is a file selector, we might get a relative path back
+            // so we should resolve the static path in this case
+            const block = state.blocks[id].config.block
+            if (
+              block.properties[propId].type === 'fileSelector' &&
+              !isAbsolute(newValues[propId])
+            ) {
+              blocks[id].stateProxy[propId] = join(
+                blocks[id].path,
+                newValues[propId]
+              )
+            } else {
+              blocks[id].stateProxy[propId] = newValues[propId]
+            }
           }
         })
         runIfAllowed(id)
