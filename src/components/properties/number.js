@@ -25,7 +25,10 @@ const Number = props => {
         type="number"
         value={value}
         onChange={e => {
-          updateValue(e.target.value)
+          updateValue(e.target.valueAsNumber)
+        }}
+        onClick={e => {
+          e.target.select()
         }}
       />
     </div>
