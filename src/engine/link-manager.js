@@ -70,6 +70,16 @@ function getIncomingLinks(blockId) {
   return incomingLinks?.[blockId] || {}
 }
 
+function linkExists(sourceBlockId, sourcePropId, targetBlockId, targetPropId) {
+  return (
+    outgoingLinks[sourceBlockId]?.[sourcePropId]?.find(
+      link =>
+        link.targetBlockId === targetBlockId &&
+        link.targetPropId === targetPropId
+    ) || false
+  )
+}
+
 function activateLink(
   sourceBlockId,
   sourcePropId,
@@ -91,6 +101,7 @@ export {
   removeAllLinks,
   getOutgoingLinks,
   getIncomingLinks,
+  linkExists,
   activateLink,
   logLinkGraph,
 }

@@ -8,6 +8,7 @@ import {
   getIncomingLinks,
   activateLink,
   removeAllLinks,
+  linkExists,
 } from './link-manager'
 import { transpile } from './transpile'
 import { TSON } from 'utils/typson'
@@ -257,13 +258,20 @@ function runIfAllowed(id, hash, yieldValue) {
 // This goes through all flagged output links needing to be run
 function processPostLinks(block) {
   Object.keys(block.updateBlocks).forEach(_blockId => {
+    let shouldAttemptRun = false
     Object.keys(block.updateBlocks[_blockId]).forEach(_propId => {
       const { sourceBlockId, sourcePropId, value } =
         block.updateBlocks[_blockId][_propId]
-      blocks[_blockId].state[_propId] = value
-      activateLink(sourceBlockId, sourcePropId, _blockId, _propId)
+      // only set if the link is still valid
+      if (linkExists(sourceBlockId, sourcePropId, _blockId, _propId)) {
+        blocks[_blockId].state[_propId] = value
+        activateLink(sourceBlockId, sourcePropId, _blockId, _propId)
+        shouldAttemptRun = true
+      }
     })
-    runIfAllowed(_blockId)
+    if (shouldAttemptRun) {
+      runIfAllowed(_blockId)
+    }
   })
   block.updateBlocks = {}
 }
