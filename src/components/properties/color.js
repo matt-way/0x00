@@ -17,12 +17,13 @@ const Color = props => {
       <div
         sx={{
           display: 'inline-block',
-          backgroundColor: value.hex,
+          backgroundColor: value ? value.hex : '#fff',
           border: '1px solid #424242',
           width: '40px',
           height: '15px',
           verticalAlign: 'middle',
           borderRadius: '3px',
+          cursor: 'crosshair',
         }}
         onClick={e => {
           e.preventDefault()

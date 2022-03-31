@@ -11,7 +11,6 @@ const ColorPicker = props => {
 
   return (
     <PopMenu
-      clickAway
       left={left}
       top={top}
       sx={{
@@ -37,5 +36,7 @@ const ColorPicker = props => {
     </PopMenu>
   )
 }
+
+ColorPicker.clickAway = true
 
 export default ColorPicker
