@@ -9,4 +9,5 @@ export const saveBlock = () => (dispatch, getState) => {
 }
 
 export const selectBlock = actions.selectBlock
+export const toggleSidebar = actions.toggleSidebar
 export const toggleEnginePanelAttached = actions.toggleEnginePanelAttached
