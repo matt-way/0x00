@@ -2,7 +2,7 @@
 import { Icon } from 'components/system'
 
 const Button = props => {
-  const { icon, children, ...rest } = props
+  const { icon, primary, children, ...rest } = props
 
   let finalChildren = children
 
@@ -23,7 +23,7 @@ const Button = props => {
   return (
     <button
       sx={{
-        backgroundColor: 'surface',
+        backgroundColor: primary ? 'buttonPrimary' : 'surface',
         color: 'textSecondary',
         border: 'none',
         '&:hover': {

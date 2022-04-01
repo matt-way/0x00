@@ -105,6 +105,7 @@ const EditProperty = props => {
           marginTop: '8px',
         }}>
         <Button
+          primary
           onClick={async e => {
             const newConfig = {
               ...propertyConfig,

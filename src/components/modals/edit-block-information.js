@@ -65,6 +65,7 @@ const EditBlockInformation = props => {
         />
         <FormActions sx={{ textAlign: 'right' }}>
           <Button
+            primary
             onClick={async () => {
               await invoke.blocks.updateInfo(blockId, {
                 name,

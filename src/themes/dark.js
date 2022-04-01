@@ -21,6 +21,7 @@ const darkTheme = {
     hubBackground: 'lightgrey',
     popMenuBackground: '#252525',
     inputBackground: '#1f1f1f',
+    buttonPrimary: '#374973',
   },
   styles: {
     root: {
