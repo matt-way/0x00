@@ -1,7 +1,7 @@
 {
   "name": "0x00",
   "scripts": {
-    "dev": "run-p dev:*",
+    "dev": "run-p -r dev:*",
     "dev:ui": "webpack serve --config ./configs/webpack.dev.ui.config.js",
     "dev:engine": "webpack serve --config ./configs/webpack.dev.engine.config.js",
     "dev:electron-app": "electron ./src/electron-app/main-esm.js"
