@@ -155,6 +155,7 @@ function createBlock(id, block, program) {
             // so we should resolve the static path in this case
             const block = state.blocks[id].config.block
             if (
+              block.properties[propId] &&
               block.properties[propId].type === 'fileSelector' &&
               !isAbsolute(newValues[propId])
             ) {
