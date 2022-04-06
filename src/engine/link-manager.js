@@ -86,8 +86,10 @@ function activateLink(
   targetBlockId,
   targetPropId
 ) {
+  const wasActivated = outgoingLinks[sourceBlockId][sourcePropId].activated
   outgoingLinks[sourceBlockId][sourcePropId].activated = true
   incomingLinks[targetBlockId][targetPropId].activated = true
+  return !wasActivated
 }
 
 function logLinkGraph() {

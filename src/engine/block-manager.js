@@ -14,6 +14,8 @@ import { transpile } from './transpile'
 import { TSON } from 'utils/typson'
 import { writeFile, readFile } from 'fs-extra'
 import { md } from 'utils/markdown-literal'
+import * as programActions from 'state/program/interface'
+import { getStore } from './store'
 
 const blocks = {}
 
@@ -266,7 +268,12 @@ function processPostLinks(block) {
       // only set if the link is still valid
       if (linkExists(sourceBlockId, sourcePropId, _blockId, _propId)) {
         blocks[_blockId].state[_propId] = value
-        activateLink(sourceBlockId, sourcePropId, _blockId, _propId)
+        if (activateLink(sourceBlockId, sourcePropId, _blockId, _propId)) {
+          // if a link is successfully activated, then tell the UI
+          getStore().dispatch(
+            programActions.activateLink(sourceBlockId, sourcePropId)
+          )
+        }
         shouldAttemptRun = true
       }
     })

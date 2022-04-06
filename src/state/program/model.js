@@ -1,9 +1,11 @@
+import { set } from 'lodash'
 import { buildModel } from 'state-management/builder'
 import { constants as blockConstants } from '../blocks/model'
 
 const initialState = () => ({
   engineRunning: true,
   loadingBlocks: {},
+  activeLinks: {},
 })
 
 export const { actions, reducer, constants } = buildModel(
@@ -90,9 +92,14 @@ export const { actions, reducer, constants } = buildModel(
       if (linkIndex >= 0) {
         outputLinks[sourcePropId].splice(linkIndex, 1)
       }
+      set(program, `activeLinks[${sourceBlockId}][${sourcePropId}]`, false)
+    },
+    activateLink: (program, sourceBlockId, sourcePropId) => {
+      set(program, `activeLinks[${sourceBlockId}][${sourcePropId}]`, true)
     },
     reloadEngine: program => {
       program.reloadEngine = !program.reloadEngine
+      program.activeLinks = {}
     },
     toggleRunning: program => {
       program.engineRunning = !program.engineRunning

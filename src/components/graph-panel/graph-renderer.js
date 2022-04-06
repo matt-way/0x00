@@ -21,7 +21,7 @@ const edgeTypes = {
 }
 
 const GraphRenderer = props => {
-  const { program, programActions, selectedBlockId } = props
+  const { program, programActions, selectedBlockId, activeLinks } = props
   const { blocks } = program
 
   const [nodes, setNodes] = useState([])
@@ -69,7 +69,6 @@ const GraphRenderer = props => {
         },
       }))
     )
-    console.log('connection starting!', params)
   }, [])
 
   const onConnectEnd = useCallback(params => {
@@ -101,6 +100,9 @@ const GraphRenderer = props => {
             sourceHandle: propId,
             targetHandle: targetPropId,
             type: 'link',
+            data: {
+              active: activeLinks?.[blockId]?.[propId],
+            },
           })
         })
       }
@@ -238,6 +240,12 @@ const DummyLink = props => {
   useEffect(() => {
     setEdges(es => [...es, edge])
 
+    return () => {
+      setEdges(es => es.filter(e => e.id !== edge.id))
+    }
+  }, [edge.data?.active])
+
+  useEffect(() => {
     setNodes(ns =>
       ns.map(n => {
         if (n.id === edge.target) {
@@ -257,7 +265,6 @@ const DummyLink = props => {
     )
 
     return () => {
-      setEdges(es => es.filter(e => e.id !== edge.id))
       setNodes(ns =>
         ns.map(n => {
           if (n.id === edge.target) {

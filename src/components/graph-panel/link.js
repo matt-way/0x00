@@ -11,6 +11,7 @@ export default function CustomEdge({
   sourcePosition,
   targetPosition,
   selected,
+  data,
 }) {
   const edgePath = getBezierPath({
     sourceX,
@@ -45,7 +46,7 @@ export default function CustomEdge({
       <path
         id={id}
         style={{
-          stroke: selected ? '#f90' : '#999',
+          stroke: selected ? '#f90' : data.active ? '#999' : '#ff5353',
           cursor: 'pointer',
         }}
         className="react-flow__edge-path"

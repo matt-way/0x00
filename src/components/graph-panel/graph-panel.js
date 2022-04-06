@@ -26,6 +26,7 @@ const GraphPanel = props => {
           program={program.config}
           programActions={programActions}
           selectedBlockId={workspace.selectedBlockId}
+          activeLinks={program.activeLinks}
         />
       )}
     </Flex>
