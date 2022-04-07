@@ -46,7 +46,8 @@ export default function CustomEdge({
       <path
         id={id}
         style={{
-          stroke: selected ? '#f90' : data.active ? '#999' : '#ff5353',
+          stroke: selected ? '#f90' : data.active ? '#999' : '#a77f7f',
+          strokeDasharray: data.active ? 'none' : '5,5',
           cursor: 'pointer',
         }}
         className="react-flow__edge-path"
