@@ -1,5 +1,4 @@
 /** @jsxImportSource theme-ui */
-import { useRef } from 'react'
 import Block from './block'
 import { useProgram } from 'state/program/hooks'
 import { useWorkspace } from 'state/workspace/hooks'
@@ -77,16 +76,10 @@ const Program = props => {
                               marginRight: '3px',
                             }}
                           />
-                          {/*<Block
-                            key={blockId}
+                          <Block
                             id={blockId}
-                            programPath={program.path}
-                            instanceData={blocks[blockId]}
-                            runFunctionsRef={runFunctionsRef}
-                            linkValuesRef={linkValuesRef}
-                            engineRunning={program.engineRunning}
-                          />*/}
-                          <Block id={blockId} />
+                            error={new Error('Some error message')}
+                          />
                         </div>
                       )}
                     </Draggable>
