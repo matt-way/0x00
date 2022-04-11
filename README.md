@@ -51,11 +51,14 @@ If you set a value on the state whose key matches the name of a property, any bl
 For example:
 
 ```
-state.myValue = 100 // <- If the block has a property called myValue, then any other blocks this property connects to will be rerun
+// If the block has a property called myValue, then any other blocks this property connects to will be rerun
+state.myValue = 100
 
-state.myObject.childKey = 10 // <- This will not trigger a state update, as only top level state keys are watched
+// This will not trigger a state update, as only top level state keys are watched
+state.myObject.childKey = 10
 
-stateUpdated(myObject) // <- this will force an update message that state.myObject has been updated, triggering a connected block rerun
+// this will force an update message that state.myObject has been updated, triggering a connected block rerun
+stateUpdated(myObject)
 ```
 
 ### `runOnce(runFunc)`
