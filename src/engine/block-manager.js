@@ -308,7 +308,6 @@ function runBlock(id, hash, yieldValue, currentTime) {
 
     block.generator = block.run(
       block.stateProxy,
-      currentTime,
       // runOnce function
       // TODO: properly handle runOnce errors
       initFunction => {

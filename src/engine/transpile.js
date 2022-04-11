@@ -71,7 +71,7 @@ export const transpile = (
   // we wrap the entire code with a generator and then move any
   // import nodes to the top of the program
   const wrappedCode = `
-    export default async function* run(state, currentTime, runOnce, stateUpdated, element, html, md, requireCSS, __dirname){
+    export default async function* run(state, runOnce, stateUpdated, element, html, md, requireCSS, __dirname){      
       ${code}
     }
 
