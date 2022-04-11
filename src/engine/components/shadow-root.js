@@ -14,11 +14,6 @@ const ShadowRoot = props => {
     }
   })
 
-  console.log({
-    width: '100%',
-    ...style,
-  })
-
   return (
     <div
       style={{

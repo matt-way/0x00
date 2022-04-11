@@ -49,6 +49,7 @@ const Program = props => {
               <div {...provided.droppableProps} ref={provided.innerRef}>
                 {renderOrder.map((blockId, index) => {
                   const selected = workspace.selectedBlockId === blockId
+                  const blockError = program.blockErrors[blockId]
                   return (
                     <Draggable
                       key={blockId}
@@ -76,10 +77,7 @@ const Program = props => {
                               marginRight: '3px',
                             }}
                           />
-                          <Block
-                            id={blockId}
-                            error={new Error('Some error message')}
-                          />
+                          <Block id={blockId} error={blockError} />
                         </div>
                       )}
                     </Draggable>

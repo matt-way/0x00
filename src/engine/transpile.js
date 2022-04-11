@@ -74,6 +74,8 @@ export const transpile = (
     export default async function* run(state, currentTime, runOnce, stateUpdated, element, html, md, requireCSS, __dirname){
       ${code}
     }
+
+    //# sourceURL=http://blocks/${blockId}.js
   `
 
   return transform(wrappedCode, options)

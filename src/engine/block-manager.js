@@ -178,8 +178,6 @@ function createBlock(id, block, program) {
   // watch for code changes to run the block
   blocks[id].events.push(
     subscribe(`blocks.${id}.code`, async code => {
-      // compile the code
-      console.log('code changed start')
       await buildRunFunction(id, code)
       runIfAllowed(id)
     })
@@ -188,8 +186,6 @@ function createBlock(id, block, program) {
   // rebuild and run if the dependencies change too
   blocks[id].events.push(
     subscribe(`blocks.${id}.dependencies`, async (deps, oldDeps, state) => {
-      // recompile the code on dep changes
-      console.log('dep change start')
       await buildRunFunction(id, state.blocks[id].code)
       runIfAllowed(id)
     })
@@ -357,18 +353,24 @@ function runBlock(id, hash, yieldValue, currentTime) {
     )
   }
 
-  block.generator.next(yieldValue).then(status => {
-    processPostLinks(block)
+  block.generator
+    .next(yieldValue)
+    .then(status => {
+      processPostLinks(block)
 
-    if (status.done) {
-      delete block.generator
-      block.dormant = true
-    } else {
-      requestAnimationFrame(currentTime => {
-        runBlock(id, hash, status.value, currentTime)
-      })
-    }
-  })
+      if (status.done) {
+        delete block.generator
+        block.dormant = true
+      } else {
+        requestAnimationFrame(currentTime => {
+          runBlock(id, hash, status.value, currentTime)
+        })
+      }
+    })
+    .catch(err => {
+      console.error(err)
+      getStore().dispatch(programActions.runtimeBlockError(id, err))
+    })
 }
 
 export { createBlock, removeBlock, attachBlockDom }

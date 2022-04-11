@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react'
 import ShadowRoot from './shadow-root'
+import Error from './error'
 import { attachBlockDom } from '../block-manager'
 
 const Block = props => {
@@ -10,19 +11,9 @@ const Block = props => {
     attachBlockDom(id, blockRef.current)
   }, [])
 
-  console.dir(Object.keys(error))
-
   return (
     <>
-      {error && (
-        <div
-          style={{
-            width: '100%',
-            backgroundColor: 'red',
-          }}>
-          {error.stack}
-        </div>
-      )}
+      {error && <Error error={error} />}
       <ShadowRoot
         shadowRef={blockRef}
         style={{ display: error ? 'none' : 'block' }}>
