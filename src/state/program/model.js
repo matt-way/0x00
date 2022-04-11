@@ -6,6 +6,7 @@ const initialState = () => ({
   engineRunning: true,
   loadingBlocks: {},
   activeLinks: {},
+  blockErrors: {},
 })
 
 export const { actions, reducer, constants } = buildModel(
@@ -100,9 +101,13 @@ export const { actions, reducer, constants } = buildModel(
     reloadEngine: program => {
       program.reloadEngine = !program.reloadEngine
       program.activeLinks = {}
+      program.blockErrors = {}
     },
     toggleRunning: program => {
       program.engineRunning = !program.engineRunning
+    },
+    runtimeBlockError: (program, blockId, error) => {
+      program.blockErrors[blockId] = error
     },
   },
   () => ({
@@ -179,6 +184,9 @@ export const { actions, reducer, constants } = buildModel(
           }
         })
       })
+    },
+    [blockConstants.persistCode]: (program, blockId, code) => {
+      delete program.blockErrors[blockId]
     },
   })
 )

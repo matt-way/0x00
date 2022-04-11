@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react'
 
 const ShadowRoot = props => {
-  const { children, shadowRef } = props
+  const { children, shadowRef, style } = props
 
   const attachShadow = useCallback(ref => {
     if (ref && !shadowRef.current) {
@@ -18,6 +18,7 @@ const ShadowRoot = props => {
     <div
       style={{
         width: '100%',
+        ...style,
       }}
       ref={attachShadow}>
       {children}

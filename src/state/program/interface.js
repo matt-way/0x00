@@ -43,3 +43,4 @@ export const removeLink = actions.removeLink
 export const activateLink = actions.activateLink
 export const reloadEngine = actions.reloadEngine
 export const toggleRunning = actions.toggleRunning
+export const runtimeBlockError = actions.runtimeBlockError
