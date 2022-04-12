@@ -73,6 +73,21 @@ runOnce(() => {
 console.log(element.querySelector('#c')) // this will log the canvas setup above.
 ```
 
+**Cleanup on block removal**
+
+Sometimes you want to run cleanup code when a block is removed. If you returns a function from within a `runOnce()` function, this function will be run whenever a block is removed. For example:
+
+```
+runOnce(() => {
+  // do initialisation work here
+
+  // return a function that you want to run when a block is removed
+  return () => {
+    // do cleanup here
+  }
+})
+```
+
 ### Animations with `yield`
 
 The engine that runs the blocks works with an internal `requestAnimationFrame()` system. Whenever you use the keyword `yield` inside a block, this tells the engine to jump out, and not jump back into the code until the next frame. This makes animating things quite easy. For example, the code below will render the numbers 0-599 in the output for each animation frame (a 10 second duration given a 60fps rate).

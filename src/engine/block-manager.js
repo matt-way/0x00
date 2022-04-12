@@ -219,6 +219,12 @@ function createBlock(id, block, program) {
 function removeBlock(id) {
   // unsubscribe from state
   blocks[id].events.forEach(eventId => unsubscribe(eventId))
+
+  // run removal function if applicable
+  if (blocks[id].removeFunc && typeof blocks[id].removeFunc === 'function') {
+    blocks[id].removeFunc()
+  }
+
   delete blocks[id]
   removeAllLinks(id)
 }
@@ -284,7 +290,7 @@ function runBlock(id, hash, yieldValue, currentTime) {
   const block = blocks[id]
 
   if (!block) {
-    // TODO: this is a catch all, but we should rectify these and be more deterministic
+    // if blocks are removed, this catches missing data and stops any generator
     return
   }
 
@@ -312,7 +318,7 @@ function runBlock(id, hash, yieldValue, currentTime) {
       // TODO: properly handle runOnce errors
       initFunction => {
         if (!block.hasRan) {
-          initFunction()
+          block.removeFunc = initFunction()
           block.hasRan = true
         }
       },
