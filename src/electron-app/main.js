@@ -17,6 +17,8 @@ import { initContextMenu } from 'electron-react-context-menu/main'
 
 let mainWindow
 
+app.setName('0x00')
+
 function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({

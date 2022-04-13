@@ -1,5 +1,6 @@
 {
   "name": "0x00",
+  "productName": "0x00",
   "scripts": {
     "dev": "run-p -r dev:*",
     "dev:ui": "webpack serve --config ./configs/webpack.dev.ui.config.js",
