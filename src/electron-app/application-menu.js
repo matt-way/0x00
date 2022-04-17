@@ -3,7 +3,25 @@ import { Menu } from 'electron'
 import { newProgram, openProgram } from './program'
 import * as workspaceActions from 'state/workspace/interface'
 
-const initApplicationMenu = () => {
+const initApplicationMenu = recentPrograms => {
+  let recentSubmenu = [
+    {
+      label: 'No recent programs',
+      enabled: false,
+    },
+  ]
+
+  if (recentPrograms) {
+    recentSubmenu = recentPrograms.slice(0, 10).map(programPath => {
+      const parts = programPath.split(/[/\\]+/)
+
+      return {
+        label: `${parts[parts.length - 2]} (${parts.slice(0, -2).join('/')})`,
+        click: () => openProgram(programPath),
+      }
+    })
+  }
+
   const menuTemplate = [
     {
       label: '&File',
@@ -17,6 +35,10 @@ const initApplicationMenu = () => {
           label: '&Open Program',
           accelerator: 'CmdOrCtrl+Shift+O',
           click: () => openProgram(),
+        },
+        {
+          label: '&Recent Programs',
+          submenu: recentSubmenu,
         },
         {
           label: '&Save Block',

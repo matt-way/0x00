@@ -17,8 +17,6 @@ import { initContextMenu } from 'electron-react-context-menu/main'
 
 let mainWindow
 
-app.setName('0x00')
-
 function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
@@ -51,6 +49,8 @@ function createWindow() {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+  app.setName('0x00')
+
   installExtension(REDUX_DEVTOOLS)
     .then(name => {
       console.log(`Added Extension:  ${name}`)
@@ -80,6 +80,10 @@ app.whenReady().then(() => {
   initApplicationMenu()
 
   createWindow()
+
+  subscribe('settings.system.recentPrograms', programs => {
+    initApplicationMenu(programs)
+  })
 
   subscribe('workspace.enginePanelAttached', (attached, prevAttached) => {
     if (prevAttached != null && attached !== prevAttached) {
@@ -111,5 +115,7 @@ app.whenReady().then(() => {
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') app.quit()
+  // TODO: decide if we want traditional macos behaviour
+  //if (process.platform !== 'darwin') app.quit()
+  app.quit()
 })
