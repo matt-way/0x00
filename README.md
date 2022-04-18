@@ -61,14 +61,18 @@ state.myObject.childKey = 10
 stateUpdated(myObject)
 ```
 
-### `runOnce(runFunc)`
+### `onChange(runFunc, [depArray])`
 
-As the code reruns on code updates, and on connection state updates, sometimes you only want certain setup code to be run once. For example, setting up a canvas to alter, or initialising a library. For this use the `runOnce()` function. The given function will run only once until a full program reset is initiated.
+Code inside a block reruns whenever the code changes, or whenever input state values change. Usually you want to run some sort of initialisation code that only runs once, or runs whenever specific values change. This can be done using the `onChange()` function. The inner function will only run once, and then any time the provided `depArray` values change. If no array is given, then the function only runs once. A full program reset will cause these functions to run again. It can be used multiple times, and they will run in execution order.
 
 ```
-runOnce(() => {
+onChange(() => {
   html`<canvas id="c"/>` // This will setup the inner html only once
 })
+
+onChange(() => {
+  // do something whenever specific state changes
+}, [state.myValue])
 
 console.log(element.querySelector('#c')) // this will log the canvas setup above.
 ```
