@@ -38,7 +38,19 @@ const yieldAwait = ({ types: t }) => {
   return {
     visitor: {
       AwaitExpression(path) {
-        path.replaceWith(t.YieldExpression(path.node.argument))
+        // we only want to yield-ify the top level await calls (as they are the only ones that sit inside our generator)
+        let functionCount = 0,
+          currentPath = path
+        // count all Function types until the root is hit
+        while (!currentPath.parentPath.isProgram()) {
+          if (currentPath.parentPath.isFunction()) {
+            functionCount++
+          }
+          currentPath = currentPath.parentPath
+        }
+        if (functionCount === 1) {
+          path.replaceWith(t.YieldExpression(path.node.argument))
+        }
       },
     },
   }
@@ -71,7 +83,7 @@ export const transpile = (
   // we wrap the entire code with a generator and then move any
   // import nodes to the top of the program
   const wrappedCode = `
-    export default async function* run(state, runOnce, stateUpdated, element, html, md, requireCSS, __dirname){      
+    export default async function* run(state, onChange, stateUpdated, element, html, md, requireCSS, __dirname){      
       ${code}
     }
 

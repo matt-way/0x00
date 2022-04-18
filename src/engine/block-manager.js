@@ -16,6 +16,7 @@ import { writeFile, readFile } from 'fs-extra'
 import { md } from 'utils/markdown-literal'
 import * as programActions from 'state/program/interface'
 import { getStore } from './store'
+import { isEqual } from 'lodash'
 
 const blocks = {}
 
@@ -314,12 +315,13 @@ function runBlock(id, hash, yieldValue, currentTime) {
 
     block.generator = block.run(
       block.stateProxy,
-      // runOnce function
-      // TODO: properly handle runOnce errors
-      initFunction => {
-        if (!block.hasRan) {
-          block.removeFunc = initFunction()
+      // onChange function
+      // TODO: properly handle errors
+      async function (func, deps) {
+        if (!block.hasRan || !isEqual(deps || [], block.changeDeps || [])) {
+          block.removeFunc = await func()
           block.hasRan = true
+          block.changeDeps = deps
         }
       },
       // stateUpdated(key) function to force a propagation. Acts like an identity assignment
