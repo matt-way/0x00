@@ -37,6 +37,8 @@ function createBlock(id, block, program) {
     locked: block.config.locked,
     updateBlocks: {},
     events: [],
+    changeDeps: {},
+    removeFuncs: {},
   }
 
   // create the state object
@@ -222,8 +224,11 @@ function removeBlock(id) {
   blocks[id].events.forEach(eventId => unsubscribe(eventId))
 
   // run removal function if applicable
-  if (blocks[id].removeFunc && typeof blocks[id].removeFunc === 'function') {
-    blocks[id].removeFunc()
+  for (let i = 0; i < blocks[id].changeIndex; i++) {
+    const removeFunc = blocks[id].removeFuncs[i]
+    if (removeFunc && typeof removeFunc === 'function') {
+      removeFunc()
+    }
   }
 
   delete blocks[id]
@@ -310,6 +315,7 @@ function runBlock(id, hash, yieldValue, currentTime) {
   }
 
   if (!block.generator) {
+    block.changeIndex = 0
     const domHead = block.domElement.children[0]
     const domContainer = block.domElement.children[1]
 
@@ -318,11 +324,13 @@ function runBlock(id, hash, yieldValue, currentTime) {
       // onChange function
       // TODO: properly handle errors
       async function (func, deps) {
-        if (!block.hasRan || !isEqual(deps || [], block.changeDeps || [])) {
-          block.removeFunc = await func()
+        const prevDeps = block.changeDeps[block.changeIndex] || []
+        if (!block.hasRan || !isEqual(deps || [], prevDeps)) {
+          block.removeFuncs[block.changeIndex] = await func()
           block.hasRan = true
-          block.changeDeps = deps
+          block.changeDeps[block.changeIndex] = deps
         }
+        block.changeIndex++
       },
       // stateUpdated(key) function to force a propagation. Acts like an identity assignment
       stateKey => {

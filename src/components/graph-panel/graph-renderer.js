@@ -1,5 +1,5 @@
 /** @jsxImportSource theme-ui */
-import React, { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import ReactFlow, {
   Controls,
   applyNodeChanges,
@@ -72,7 +72,6 @@ const GraphRenderer = props => {
   }, [])
 
   const onConnectEnd = useCallback(params => {
-    console.log('connection ending!')
     setNodes(ns =>
       ns.map(n => ({
         ...n,
@@ -119,24 +118,6 @@ const GraphRenderer = props => {
         fontFamily: 'Consolas, "Courier New", monospace',
         color: 'textSecondary',
       }}>
-      {Object.entries(blocks).map(([id, block]) => (
-        <DummyBlock
-          key={id}
-          id={id}
-          blockInstance={block}
-          setNodes={setNodes}
-          setEdges={setEdges}
-          selected={id === selectedBlockId}
-        />
-      ))}
-      {edgeSet.map(edge => (
-        <DummyLink
-          key={edge.id}
-          edge={edge}
-          setEdges={setEdges}
-          setNodes={setNodes}
-        />
-      ))}
       <ReactFlow
         fitView
         nodes={nodes}
@@ -149,6 +130,24 @@ const GraphRenderer = props => {
         onConnectStart={onConnectStart}
         onConnectEnd={onConnectEnd}
         deleteKeyCode={[]}>
+        {Object.entries(blocks).map(([id, block]) => (
+          <DummyBlock
+            key={id}
+            id={id}
+            blockInstance={block}
+            setNodes={setNodes}
+            setEdges={setEdges}
+            selected={id === selectedBlockId}
+          />
+        ))}
+        {edgeSet.map(edge => (
+          <DummyLink
+            key={edge.id}
+            edge={edge}
+            setEdges={setEdges}
+            setNodes={setNodes}
+          />
+        ))}
         <Controls
           showInteractive={false}
           sx={{
