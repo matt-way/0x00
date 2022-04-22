@@ -59,22 +59,68 @@ const Property = props => {
         ref={domRef}
         sx={{
           position: 'relative',
-          alignItems: 'center',
-          height: '25px',
-          padding: '0px 8px',
         }}>
-        <PropertyType
-          id={id}
-          blockId={blockId}
-          blockPath={blockPath}
-          config={config}
-          value={value}
-          updateValue={val => {
-            programActions.updatePropertyValue(blockId, id, val)
+        <Flex
+          sx={{
+            flex: 1,
+            padding: '0px 8px',
+            height: '25px',
+            alignItems: 'center',
           }}
-          incomingConnected={incomingConnected}
-          outgoingConnected={outgoingConnected}
-        />
+          draggable={true}
+          onDragStart={e => {
+            e.dataTransfer.setData(
+              'text/plain',
+              JSON.stringify({
+                blockId,
+                propId: id,
+              })
+            )
+            e.dataTransfer.effectAllowed = 'move'
+            // The draggable image creation isn't great
+            // so doing the best i can for now
+            var rect = domRef.current.getBoundingClientRect()
+            const xPos =
+              ((e.clientX - rect.left) / rect.width) *
+              (domRef.current.clientWidth * 1.2)
+            const yPos =
+              ((e.clientY - rect.top) / rect.height) *
+              (domRef.current.clientHeight * 1.2)
+            e.dataTransfer.setDragImage(e.target, xPos, yPos)
+          }}
+          onDragEnter={e => {
+            e.preventDefault()
+          }}
+          onDragOver={async e => {
+            e.preventDefault()
+          }}
+          onDrop={e => {
+            if (e.dataTransfer.types.includes('text/plain')) {
+              const values = JSON.parse(e.dataTransfer.getData('text/plain'))
+              if (values.blockId === blockId) {
+                var rect = domRef.current.getBoundingClientRect()
+                const vert = (e.clientY - rect.top) / rect.height
+                if (vert < 0.5) {
+                  blockActions.reorderPropertyAbove(values.propId, id)
+                } else {
+                  blockActions.reorderPropertyBelow(values.propId, id)
+                }
+              }
+            }
+          }}>
+          <PropertyType
+            id={id}
+            blockId={blockId}
+            blockPath={blockPath}
+            config={config}
+            value={value}
+            updateValue={val => {
+              programActions.updatePropertyValue(blockId, id, val)
+            }}
+            incomingConnected={incomingConnected}
+            outgoingConnected={outgoingConnected}
+          />
+        </Flex>
         <Handle
           type="target"
           position="left"

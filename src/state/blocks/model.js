@@ -71,6 +71,28 @@ export const { actions, reducer, constants } = buildModel(
       delete block.properties[name]
       block.propertyOrder = block.propertyOrder.filter(n => n !== name)
     },
+    reorderPropertyAbove: (blocks, blockId, propId, abovePropId) => {
+      const { block } = blocks[blockId].config
+      const propIndex = block.propertyOrder.findIndex(n => n === propId)
+      const aboveIndex = block.propertyOrder.findIndex(n => n === abovePropId)
+      const to = propIndex < aboveIndex ? aboveIndex - 1 : aboveIndex
+      block.propertyOrder.splice(
+        to,
+        0,
+        block.propertyOrder.splice(propIndex, 1)[0]
+      )
+    },
+    reorderPropertyBelow: (blocks, blockId, propId, belowPropId) => {
+      const { block } = blocks[blockId].config
+      const propIndex = block.propertyOrder.findIndex(n => n === propId)
+      const belowIndex = block.propertyOrder.findIndex(n => n === belowPropId)
+      const to = propIndex < belowIndex ? belowIndex : belowIndex + 1
+      block.propertyOrder.splice(
+        to,
+        0,
+        block.propertyOrder.splice(propIndex, 1)[0]
+      )
+    },
     installDependencyStart: (blocks, blockId, packageName, version) => {
       const { config } = blocks[blockId]
       config.dependencies = {

@@ -1,5 +1,5 @@
 /** @jsxImportSource theme-ui */
-import { useRef } from 'react'
+import { useRef, useLayoutEffect } from 'react'
 import { useBlockActions } from 'state/blocks/hooks'
 import { Handle } from 'react-flow-renderer'
 import { Icon } from 'components/system'
@@ -10,6 +10,7 @@ import Property from './property'
 import ContextMenu from 'electron-react-context-menu/renderer'
 import { invoke } from 'ipc/renderer'
 import { DYNAMIC_HANDLE_ID } from './constants'
+import { useUpdateNodeInternals } from 'react-flow-renderer'
 
 const Block = props => {
   const { id, data, selected } = props
@@ -18,11 +19,16 @@ const Block = props => {
   const modalActions = useModalActions()
   const workspaceActions = useWorkspaceActions()
   const propertyCreatorRef = useRef()
+  const updateNodeInternals = useUpdateNodeInternals()
 
   const { config = {} } = block
   const blockConfig = config.block || {}
   const { properties = {}, propertyOrder = [] } = blockConfig
   const { inputValues = {}, outputLinks = {} } = blockInstance
+
+  useLayoutEffect(() => {
+    updateNodeInternals(id)
+  }, [blockConfig?.propertyOrder])
 
   return (
     <div

@@ -29,4 +29,6 @@ export const createProperty =
   }
 export const updateProperty = actions.updateProperty
 export const removeProperty = actions.removeProperty
+export const reorderPropertyAbove = actions.reorderPropertyAbove
+export const reorderPropertyBelow = actions.reorderPropertyBelow
 export const unlock = actions.unlock
