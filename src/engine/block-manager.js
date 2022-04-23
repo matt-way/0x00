@@ -292,7 +292,7 @@ function processPostLinks(block) {
   block.updateBlocks = {}
 }
 
-function runBlock(id, hash, yieldValue, currentTime) {
+async function runBlock(id, hash, yieldValue, currentTime) {
   const block = blocks[id]
 
   if (!block) {
@@ -322,11 +322,10 @@ function runBlock(id, hash, yieldValue, currentTime) {
     block.generator = block.run(
       block.stateProxy,
       // onChange function
-      // TODO: properly handle errors
-      async function (func, deps) {
+      function (func, deps) {
         const prevDeps = block.changeDeps[block.changeIndex] || []
         if (!block.hasRan || !isEqual(deps || [], prevDeps)) {
-          block.removeFuncs[block.changeIndex] = await func()
+          block.removeFuncs[block.changeIndex] = func()
           block.hasRan = true
           block.changeDeps[block.changeIndex] = deps
         }
@@ -368,24 +367,23 @@ function runBlock(id, hash, yieldValue, currentTime) {
     )
   }
 
-  block.generator
-    .next(yieldValue)
-    .then(status => {
-      processPostLinks(block)
+  try {
+    const status = await block.generator.next(yieldValue)
 
-      if (status.done) {
-        delete block.generator
-        block.dormant = true
-      } else {
-        requestAnimationFrame(currentTime => {
-          runBlock(id, hash, status.value, currentTime)
-        })
-      }
-    })
-    .catch(err => {
-      console.error(err)
-      getStore().dispatch(programActions.runtimeBlockError(id, err))
-    })
+    processPostLinks(block)
+
+    if (status.done) {
+      delete block.generator
+      block.dormant = true
+    } else {
+      requestAnimationFrame(currentTime => {
+        runBlock(id, hash, status.value, currentTime)
+      })
+    }
+  } catch (err) {
+    console.error(err)
+    getStore().dispatch(programActions.runtimeBlockError(id, err))
+  }
 }
 
 export { createBlock, removeBlock, attachBlockDom }
