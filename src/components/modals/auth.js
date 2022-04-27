@@ -3,7 +3,7 @@ import { useRef, useEffect } from 'react'
 import { PopMenu, LoadingButton } from 'components/system'
 import {
   startFirebaseAuth,
-  cancelFirebaseAuth,
+  checkVerificationStatus,
   sendVerificationEmail,
 } from 'block-server/firebase'
 import { useSettings } from 'state/settings/hooks'
@@ -15,18 +15,25 @@ const Auth = props => {
 
   const { user } = settings
 
+  // hack to override display name label
+  function handleInsertion(e) {
+    if (e.target.querySelector) {
+      const label = e.target?.querySelector(
+        'label[for="ui-sign-in-name-input"]'
+      )
+      if (label) {
+        label.innerHTML = 'Display Name'
+      }
+    }
+  }
+
   useEffect(() => {
     if (!user || !user.email) {
-      startFirebaseAuth(
-        ref.current,
-        authResult => {
-          console.log('authResult', authResult)
-          if (authResult?.user?.emailVerified) {
-            sendVerificationEmail()
-          }
-        },
-        error => {}
-      )
+      startFirebaseAuth(ref.current)
+      document.addEventListener('DOMNodeInserted', handleInsertion)
+      return () => {
+        document.removeEventListener('DOMNodeInserted', handleInsertion)
+      }
     }
   }, [])
 
@@ -54,8 +61,22 @@ const Auth = props => {
             sx={{
               fontSize: 12,
             }}>
-            Email is not verified. Email must be verified before you can upload
-            blocks.
+            You have been sent a verification email. Once you are verified you
+            can upload blocks. After clicking the verification link, please
+            click the button below to check the status.
+          </div>
+          <div
+            sx={{
+              textAlign: 'right',
+              marginTop: '20px',
+            }}>
+            <LoadingButton
+              primary
+              onClick={async () => {
+                await checkVerificationStatus()
+              }}>
+              Check Verification Status
+            </LoadingButton>
           </div>
           <div
             sx={{
@@ -63,6 +84,13 @@ const Auth = props => {
               marginTop: '10px',
             }}>
             <LoadingButton
+              sx={{
+                border: 'none',
+                fontSize: '12px',
+                textDecoration: 'underline',
+                background: 'none',
+                padding: 0,
+              }}
               onClick={async () => {
                 await sendVerificationEmail()
               }}>

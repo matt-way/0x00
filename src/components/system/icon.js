@@ -18,6 +18,7 @@ import TrashcanOutlineIcon from 'mdi-react/TrashcanOutlineIcon'
 import UploadNetworkOutline from 'mdi-react/UploadNetworkOutlineIcon'
 import CloudUploadOutline from 'mdi-react/CloudUploadOutlineIcon'
 import LockAlertOutline from 'mdi-react/LockAlertOutlineIcon'
+import AccountOutline from 'mdi-react/AccountOutlineIcon'
 
 const map = {
   layersPlus: LayersPlusIcon,
@@ -39,6 +40,7 @@ const map = {
   uploadNetworkOutline: UploadNetworkOutline,
   cloudUploadOutline: CloudUploadOutline,
   lockAlertOutline: LockAlertOutline,
+  accountOutline: AccountOutline,
 }
 
 const Icon = props => {

@@ -6,7 +6,7 @@ if (!window.contextMenuIPC) {
 }
 
 const ContextMenu = props => {
-  const { menu, children } = props
+  const { menu, leftClick, children } = props
 
   const showMenu = () => {
     const instanceId = generateId()
@@ -41,7 +41,8 @@ const ContextMenu = props => {
   }
 
   return React.cloneElement(React.Children.only(children), {
-    onContextMenu: showMenu,
+    ...(leftClick && { onClick: showMenu }),
+    ...(!leftClick && { onContextMenu: showMenu }),
   })
 }
 

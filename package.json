@@ -38,7 +38,7 @@
     "electron": "^17.0.1",
     "electron-fetch": "^1.7.4",
     "esm-wallaby": "^3.2.25",
-    "firebase": "^9.6.7",
+    "firebase": "^9.6.11",
     "firebaseui": "^6.0.0",
     "fs-extra": "^10.0.0",
     "immer": "^9.0.12",

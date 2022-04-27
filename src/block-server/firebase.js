@@ -19,10 +19,12 @@ function initFirebase(store) {
   firebase.auth().onAuthStateChanged(user => {
     if (user) {
       console.log('user signed in', user.email)
+      console.log(user)
       store.dispatch(
         settingsActions.updateValue('user', {
           email: user.email,
           emailVerified: user.emailVerified,
+          displayName: user.displayName,
         })
       )
     } else {
@@ -33,16 +35,26 @@ function initFirebase(store) {
 
   firebase.auth().onIdTokenChanged(user => {
     console.log('id token changed', user)
-    // may need to do user.reload()
+    if (user) {
+      store.dispatch(
+        settingsActions.updateValue('user', {
+          email: user.email,
+          emailVerified: user.emailVerified,
+          displayName: user.displayName,
+        })
+      )
+    } else {
+      store.dispatch(settingsActions.removePath('user'))
+    }
   })
 }
 
-function startFirebaseAuth(element, success, error) {
+function startFirebaseAuth(element) {
   return firebaseAuthUI.start(element, {
     signInOptions: [
       {
         provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
-        requireDisplayName: false,
+        requireDisplayName: true,
       },
     ],
     signInFlow: 'popup',
@@ -50,8 +62,8 @@ function startFirebaseAuth(element, success, error) {
       signInSuccessWithAuthResult: authResult => {
         console.log('signInSuccessWithAuthResult', authResult)
         firebase.auth().updateCurrentUser(authResult.user)
-        //console.log('jsoned', )
         if (!authResult.user.emailVerified) {
+          sendVerificationEmail()
         }
         return false
       },
@@ -60,6 +72,22 @@ function startFirebaseAuth(element, success, error) {
         return false
       },
     },
+  })
+}
+
+function checkVerificationStatus() {
+  return new Promise((resolve, reject) => {
+    firebase
+      .auth()
+      .currentUser.reload()
+      .then(
+        () => {
+          resolve()
+        },
+        error => {
+          reject(error)
+        }
+      )
   })
 }
 
@@ -79,4 +107,28 @@ function sendVerificationEmail() {
   })
 }
 
-export { firebaseApp, initFirebase, startFirebaseAuth, sendVerificationEmail }
+function signOut() {
+  return new Promise((resolve, reject) => {
+    firebase
+      .auth()
+      .signOut()
+      .then(
+        () => {
+          store.dispatch(settingsActions.removePath('user'))
+          resolve()
+        },
+        error => {
+          reject(error)
+        }
+      )
+  })
+}
+
+export {
+  firebaseApp,
+  initFirebase,
+  startFirebaseAuth,
+  checkVerificationStatus,
+  sendVerificationEmail,
+  signOut,
+}
