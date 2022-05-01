@@ -80,7 +80,19 @@ function createBlock(id, block, program) {
   blocks[id].events.push(
     subscribe(`blocks.${id}.saveBlockState`, saveBlockState => {
       if (saveBlockState && saveBlockState.path) {
-        const toWrite = v8.serialize(blocks[id].state)
+        const clone = Object.keys(blocks[id].state).reduce((acc, key) => {
+          // TODO: improve this, to strip out any value type that v8 cant handle
+          // or create a custom object that we fix up after deserialisation
+          if (
+            typeof blocks[id].state[key] !== 'function' &&
+            blocks[id].state[key] !== null
+          ) {
+            acc[key] = blocks[id].state[key]
+          }
+          return acc
+        }, {})
+
+        const toWrite = v8.serialize(clone)
         writeFile(saveBlockState.path, toWrite, 'binary')
         getStore().dispatch(blockActions.saveStateComplete(id))
       }
