@@ -118,8 +118,14 @@ export const { actions, reducer, constants } = buildModel(
     saveBlockState: (blocks, blockId, path) => {
       blocks[blockId].saveBlockState = { path, hash: Math.random() }
     },
+    saveStateComplete: (blocks, blockId) => {
+      delete blocks[blockId].saveBlockState
+    },
     loadBlockState: (blocks, blockId, path) => {
       blocks[blockId].loadBlockState = { path, hash: Math.random() }
+    },
+    loadStateComplete: (blocks, blockId) => {
+      delete blocks[blockId].loadBlockState
     },
   },
   () => ({

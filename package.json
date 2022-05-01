@@ -60,8 +60,6 @@
     "redux-thunk": "^2.4.1",
     "require-from-string": "^2.0.2",
     "theme-ui": "^0.13.1",
-    "typeson": "^6.1.0",
-    "typeson-registry": "^1.0.0-alpha.39",
     "vm2": "^3.9.8"
   }
 }

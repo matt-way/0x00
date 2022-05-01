@@ -32,3 +32,5 @@ export const removeProperty = actions.removeProperty
 export const reorderPropertyAbove = actions.reorderPropertyAbove
 export const reorderPropertyBelow = actions.reorderPropertyBelow
 export const unlock = actions.unlock
+export const saveStateComplete = actions.saveStateComplete
+export const loadStateComplete = actions.loadStateComplete

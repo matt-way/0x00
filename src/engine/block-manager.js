@@ -1,3 +1,4 @@
+import v8 from 'v8'
 import requireFromString from 'require-from-string'
 import { join, isAbsolute } from 'path'
 import { subscribe, unsubscribe } from 'state-management/watcher'
@@ -11,10 +12,10 @@ import {
   linkExists,
 } from './link-manager'
 import { transpile } from './transpile'
-import { TSON } from 'utils/typson'
 import { writeFile, readFile } from 'fs-extra'
 import { md } from 'utils/markdown-literal'
 import * as programActions from 'state/program/interface'
+import * as blockActions from 'state/blocks/interface'
 import { getStore } from './store'
 import { isEqual } from 'lodash'
 
@@ -79,8 +80,9 @@ function createBlock(id, block, program) {
   blocks[id].events.push(
     subscribe(`blocks.${id}.saveBlockState`, saveBlockState => {
       if (saveBlockState && saveBlockState.path) {
-        const toWrite = TSON.stringify(blocks[id].state)
-        return writeFile(saveBlockState.path, toWrite, 'binary')
+        const toWrite = v8.serialize(blocks[id].state)
+        writeFile(saveBlockState.path, toWrite, 'binary')
+        getStore().dispatch(blockActions.saveStateComplete(id))
       }
     })
   )
@@ -88,13 +90,16 @@ function createBlock(id, block, program) {
   blocks[id].events.push(
     subscribe(`blocks.${id}.loadBlockState`, async loadBlockState => {
       if (loadBlockState && loadBlockState.path) {
-        const data = await readFile(loadBlockState.path, 'binary')
-        const restoredState = TSON.parse(data)
+        const data = await readFile(loadBlockState.path)
+        const restoredState = v8.deserialize(data)
+        getStore().dispatch(blockActions.loadStateComplete(id))
 
         // in order to preserve getters and setters, walk through top level keys
-        Object.keys(state).forEach(k => {
+        Object.keys(restoredState).forEach(k => {
           blocks[id].state[k] = restoredState[k]
         })
+
+        runIfAllowed(id)
       }
     })
   )

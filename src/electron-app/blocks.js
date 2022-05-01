@@ -268,7 +268,7 @@ const loadState = async blockId => {
   const blockPath = store.getState().blocks[blockId].path
   const defaultPath = join(blockPath, BLOCK_DEFAULT_STATE_PATH)
 
-  const res = await openDialog({
+  const res = await dialog.showOpenDialog({
     title: 'Load Block State',
     properties: ['openFile'],
     buttonLabel: 'Load Block State',
