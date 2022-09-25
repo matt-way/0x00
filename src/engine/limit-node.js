@@ -82,7 +82,10 @@ Object.defineProperty(Module.prototype, 'require', {
         codePath = joinSep(
           MODULES_FOLDER,
           moduleName,
-          packageJson.module || packageJson.main || 'index.js'
+          (typeof packageJson.browser === 'string' && packageJson.browser) ||
+            packageJson.module ||
+            packageJson.main ||
+            'index.js'
         )
 
         moduleStack.push(moduleName)
