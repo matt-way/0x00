@@ -10,6 +10,7 @@ export const modalIds = {
   editBlockInformation: 'editBlockInformation',
   auth: 'auth',
   colorPicker: 'colorPicker',
+  programSettings: 'programSettings',
 }
 
 const initialState = () => ({

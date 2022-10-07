@@ -40,6 +40,8 @@ function createBlock(id, block, program) {
     events: [],
     changeDeps: {},
     removeFuncs: {},
+    framesPerRAF: 1,
+    frameCounter: 0,
   }
 
   // create the state object
@@ -234,6 +236,12 @@ function createBlock(id, block, program) {
       }
     })
   )
+
+  blocks[id].events.push(
+    subscribe(`program.config.framesPerRAF`, _framesPerRAF => {
+      blocks[id].framesPerRAF = _framesPerRAF
+    })
+  )
 }
 
 function removeBlock(id) {
@@ -392,10 +400,17 @@ async function runBlock(id, hash, yieldValue, currentTime) {
     if (status.done) {
       delete block.generator
       block.dormant = true
+      block.frameCounter = 0
     } else {
-      requestAnimationFrame(currentTime => {
+      block.frameCounter++
+      if (block.frameCounter >= block.framesPerRAF) {
+        block.frameCounter = 0
+        requestAnimationFrame(currentTime => {
+          runBlock(id, hash, status.value, currentTime)
+        })
+      } else {
         runBlock(id, hash, status.value, currentTime)
-      })
+      }
     }
   } catch (err) {
     console.error(err)

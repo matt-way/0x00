@@ -1,12 +1,16 @@
 /** @jsxImportSource theme-ui */
-import { ToolbarButton, Icon } from 'components/system'
+import { useRef } from 'react'
+import { ToolbarButton, Icon, Flex } from 'components/system'
 import { useProgram } from 'state/program/hooks'
 import { useWorkspace } from 'state/workspace/hooks'
+import { useModalActions } from 'state/modals/hooks'
+import { modalIds } from 'state/modals/model'
 
 const EngineControls = props => {
   const { className, rounded } = props
   const [program, programActions] = useProgram()
   const [workspace, workspaceActions] = useWorkspace()
+  const modalActions = useModalActions()
 
   return (
     <div
@@ -44,6 +48,14 @@ const EngineControls = props => {
           programActions.reloadEngine()
         }}>
         Reset
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => {
+          modalActions.open(modalIds.programSettings)
+        }}>
+        <Flex>
+          <Icon type="settings" size={18} />
+        </Flex>
       </ToolbarButton>
       <ToolbarButton
         sx={{

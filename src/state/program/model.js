@@ -109,6 +109,9 @@ export const { actions, reducer, constants } = buildModel(
     runtimeBlockError: (program, blockId, error) => {
       program.blockErrors[blockId] = error
     },
+    updateSettings: (program, settings) => {
+      Object.assign(program.config, settings)
+    },
   },
   () => ({
     [blockConstants.create]: (program, blockId, name, x, y) => {

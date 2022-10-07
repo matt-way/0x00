@@ -9,6 +9,7 @@ import EditBlockInformation from './edit-block-information'
 import Auth from './auth'
 import { modalIds } from 'state/modals/model'
 import ColorPicker from './color-picker'
+import ProgramSettings from './program_settings'
 
 const lookup = {
   [modalIds.intro]: Intro,
@@ -19,6 +20,7 @@ const lookup = {
   [modalIds.editBlockInformation]: EditBlockInformation,
   [modalIds.auth]: Auth,
   [modalIds.colorPicker]: ColorPicker,
+  [modalIds.programSettings]: ProgramSettings,
 }
 
 const Modals = props => {
