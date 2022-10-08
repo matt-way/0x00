@@ -18,6 +18,7 @@ const darkTheme = {
     primary: '#1a8ea5',
     blockBackground: '#252525',
     blockHeader: 'cornflowerblue',
+    blockHeaderPaused: '#111',
     hubBackground: 'lightgrey',
     popMenuBackground: '#252525',
     inputBackground: '#1f1f1f',

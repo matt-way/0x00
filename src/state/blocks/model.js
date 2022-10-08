@@ -127,6 +127,14 @@ export const { actions, reducer, constants } = buildModel(
     loadStateComplete: (blocks, blockId) => {
       delete blocks[blockId].loadBlockState
     },
+    setPaused: (blocks, blockId, paused) => {
+      const { block } = blocks[blockId].config
+      if (!paused) {
+        delete block.paused
+      } else {
+        block.paused = paused
+      }
+    },
   },
   () => ({
     [programConstants.reset]: () => initialState(),

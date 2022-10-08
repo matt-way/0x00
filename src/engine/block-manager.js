@@ -242,6 +242,18 @@ function createBlock(id, block, program) {
       blocks[id].framesPerRAF = _framesPerRAF
     })
   )
+
+  blocks[id].events.push(
+    subscribe(
+      `blocks.${id}.config.block.paused`,
+      (isPaused, wasPaused, state) => {
+        blocks[id].paused = isPaused
+        if (!isPaused && wasPaused && state.program.engineRunning) {
+          runIfAllowed(id)
+        }
+      }
+    )
+  )
 }
 
 function removeBlock(id) {
@@ -326,6 +338,10 @@ async function runBlock(id, hash, yieldValue, currentTime) {
   }
 
   block.dormant = false
+
+  if (block.paused) {
+    return
+  }
 
   if (!block.running) {
     block.pauseState = { hash, yieldValue }

@@ -42,6 +42,12 @@ const Block = props => {
       <ContextMenu
         menu={[
           {
+            label: blockConfig.paused ? 'Unpause' : 'Pause',
+            click: () => {
+              blockActions.setPaused(!blockConfig.paused)
+            },
+          },
+          {
             label: 'Save State to File',
             click: () => {
               invoke.blocks.saveState(id)
@@ -63,10 +69,12 @@ const Block = props => {
         <div
           sx={{
             borderRadius: '5px 5px 0px 0px',
-            backgroundColor: 'blockHeader',
+            backgroundColor: blockConfig.paused
+              ? 'blockHeaderPaused'
+              : 'blockHeader',
             padding: '8px',
             marginBottom: '5px',
-            color: 'text',
+            color: blockConfig.paused ? 'textSecondary' : 'text',
           }}
           className="block-header"
           onClick={() => {
