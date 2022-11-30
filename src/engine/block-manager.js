@@ -110,7 +110,7 @@ function createBlock(id, block, program) {
 
         // in order to preserve getters and setters, walk through top level keys
         Object.keys(restoredState).forEach(k => {
-          blocks[id].state[k] = restoredState[k]
+          blocks[id].stateProxy[k] = restoredState[k]
         })
 
         runIfAllowed(id)

@@ -5,6 +5,7 @@ import Checkbox from './checkbox'
 import Color from './color'
 import Slider from './slider'
 import FileSelector from './file-selector'
+import Button from './button'
 
 export const typeMap = {
   generic: {
@@ -34,5 +35,9 @@ export const typeMap = {
   fileSelector: {
     component: FileSelector,
     label: 'File Selector',
+  },
+  button: {
+    component: Button,
+    label: 'Button',
   },
 }
