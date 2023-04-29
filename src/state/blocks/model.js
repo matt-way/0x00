@@ -135,6 +135,14 @@ export const { actions, reducer, constants } = buildModel(
         block.paused = paused
       }
     },
+    showChat: (blocks, blockId, show) => {
+      const { block } = blocks[blockId].config
+      if (!show) {
+        delete block.showChat
+      } else {
+        block.showChat = show
+      }
+    },
   },
   () => ({
     [programConstants.reset]: () => initialState(),

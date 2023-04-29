@@ -1,3 +1,3 @@
-import MonacoEditor from './monaco-editor'
+import EditorPanel from './monaco-editor'
 
-export { MonacoEditor }
+export { EditorPanel }
