@@ -458,7 +458,10 @@ function createRafWrapper(block) {
     if (isBlockPaused(block)) {
       block.pauseState.push({
         resume: () => {
-          requestAnimationFrame(callback)
+          requestAnimationFrame(ms => {
+            callback(ms)
+            processPostLinks(block)
+          })
         },
         cancel: () => {
           // to cancel a raf just dont run it
@@ -473,6 +476,7 @@ function createRafWrapper(block) {
           return
         }
         callback(ms)
+        processPostLinks(block)
       })
     }
   }
