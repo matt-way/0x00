@@ -72,6 +72,22 @@ const rafWrapper = ({ types: t }) => {
   }
 }
 
+const timeoutWrapper = ({ types: t }) => {
+  return {
+    visitor: {
+      CallExpression(path) {
+        const callee = path.node.callee
+
+        if (t.isIdentifier(callee) && callee.name === 'setTimeout') {
+          callee.name = 'controlFlow'
+          callee.property = t.identifier('timeout')
+          path.node.callee = t.memberExpression(callee, callee.property)
+        }
+      },
+    },
+  }
+}
+
 export const transpile = (
   blockId,
   code,
@@ -80,6 +96,7 @@ export const transpile = (
       importCSS,
       importExtractor,
       rafWrapper,
+      timeoutWrapper,
       [
         inlineImport,
         {

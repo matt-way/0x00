@@ -373,7 +373,7 @@ async function runBlock(id) {
       domContainer, // dom element
       {
         raf: createRafWrapper(block),
-        //timeoutWrapper,
+        timeout: createTimeoutWrapper(block),
         //intervalWrapper,
         //awaitWrapper
       },
@@ -462,6 +462,32 @@ function createRafWrapper(block) {
         processPostLinks(block)
       })
     }
+  }
+}
+
+function createTimeoutWrapper(block) {
+  const runIndex = block.runIndex
+  return (callback, ms) => {
+    setTimeout(() => {
+      if (runIndex !== block.runIndex) {
+        return
+      }
+      if (isBlockPaused(block)) {
+        block.pauseState.push({
+          resume: () => {
+            callback()
+            processPostLinks(block)
+          },
+          cancel: () => {
+            // to cancel just dont run setTimeout
+            return
+          },
+        })
+      } else {
+        callback()
+        processPostLinks(block)
+      }
+    }, ms)
   }
 }
 
