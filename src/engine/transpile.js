@@ -123,7 +123,7 @@ export const transpile = (
     //# sourceURL=http://blocks/${blockId}.js
   `*/
   const wrappedCode = `
-    export default async function run(state, element, controlFlow, stateUpdated, onChange, html, md){
+    export default async function run(state, element, controlFlow, stateUpdated, onChange, html, md, __dirname){
       ${code}
     }
 

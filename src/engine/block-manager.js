@@ -348,7 +348,6 @@ function attemptRun(id) {
 }
 
 async function runBlock(id) {
-  console.log('running block')
   const block = blocks[id]
   if (!block) {
     return
@@ -398,8 +397,10 @@ async function runBlock(id) {
         block.onChangeIndex++
       },
       createHtmlHelper(domContainer),
-      createMdHelper(domContainer)
+      createMdHelper(domContainer),
       //cssHelper,
+      // __dirname override block path
+      block.path
     )
 
     processPostLinks(block)
