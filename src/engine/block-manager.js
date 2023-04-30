@@ -325,23 +325,6 @@ function processPostLinks(block) {
   block.updateBlocks = {}
 }
 
-/*function runIfAllowed(id, hash, yieldValue) {
-  if (
-    !blocks[id] ||
-    !blocks[id].domElement ||
-    !blocks[id].run ||
-    blocks[id].locked
-  ) {
-    return
-  }
-
-  if (Object.values(getIncomingLinks(id)).some(link => !link.activated)) {
-    return
-  }
-
-  runBlock(id, hash, yieldValue)
-}*/
-
 function isBlockPaused(block) {
   return block.paused || block.enginePaused
 }
