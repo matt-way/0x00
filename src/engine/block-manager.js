@@ -335,7 +335,7 @@ function attemptRun(id) {
     return
   }
 
-  if (Object.values(getIncomingLinks(block.id)).some(link => !link.activated)) {
+  if (Object.values(getIncomingLinks(id)).some(link => !link.activated)) {
     return
   }
 
