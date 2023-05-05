@@ -4,7 +4,7 @@ function getGPTResponse(messages, onContent, onError) {
   const xhr = OpenAIExt.streamClientChatCompletion(
     {
       model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
-      temperature: 0.1,
+      temperature: 0.2,
       messages,
     },
     {
