@@ -48,6 +48,12 @@ const Block = props => {
             },
           },
           {
+            label: blockConfig.forceRun ? '✅ Force Run' : 'Force Run',
+            click: () => {
+              blockActions.setForceRun(!blockConfig.forceRun)
+            }
+          },
+          {
             label: 'Save State to File',
             click: () => {
               invoke.blocks.saveState(id)

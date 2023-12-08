@@ -34,11 +34,12 @@ function createBlock(id, block, program) {
     programPath: program.path,
     main: block.config.main,
     locked: block.config.locked,
+    forceRun: block.config.forceRun,
     runIndex: 0, // this keeps track of which run function we have run
 
     outputLinkChanges: {},
     updateBlocks: {},
-    paused: false,
+    paused: false,    
     enginePaused: false,
     pauseState: [],
     onChangeStore: [],
@@ -262,6 +263,18 @@ function createBlock(id, block, program) {
       }
     )
   )
+
+  blocks[id].events.push(
+    subscribe(
+      `blocks.${id}.config.block.forceRun`,
+      (isForced, wasForced) => {
+        blocks[id].forceRun = isForced
+        if (isForced) {
+          attemptRun(id)
+        }
+      }
+    )
+  )
 }
 
 function removeBlock(id) {
@@ -334,8 +347,8 @@ function attemptRun(id) {
   if (!block || !block.domElement || !block.runFunction || block.locked) {
     return
   }
-
-  if (Object.values(getIncomingLinks(id)).some(link => !link.activated)) {
+  
+  if (!block.forceRun && Object.values(getIncomingLinks(id)).some(link => !link.activated)) {
     return
   }
 

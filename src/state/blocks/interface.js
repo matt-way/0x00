@@ -35,4 +35,5 @@ export const unlock = actions.unlock
 export const saveStateComplete = actions.saveStateComplete
 export const loadStateComplete = actions.loadStateComplete
 export const setPaused = actions.setPaused
+export const setForceRun = actions.setForceRun
 export const showChat = actions.showChat
