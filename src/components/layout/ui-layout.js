@@ -2,7 +2,7 @@
 import { Grid, FlexBox } from 'components/system'
 import { GraphPanel } from 'components/graph-panel'
 import { SideBarPanel } from 'components/sidebar-panel'
-import { MonacoEditor } from 'components/editor-panel'
+import { EditorPanel } from 'components/editor-panel'
 import { useWorkspace } from 'state/workspace/hooks'
 import StatusBar from 'components/status-bar'
 import Modals from 'components/modals'
@@ -41,9 +41,9 @@ const UILayout = props => {
         sx={{
           gridColumn: showSidebar ? '4' : '2',
           gridRow: '4',
-          backgroundColor: 'surface',
+          position: 'relative',
         }}>
-        {<MonacoEditor />}
+        <EditorPanel />
       </FlexBox>
       <FlexBox
         sx={{

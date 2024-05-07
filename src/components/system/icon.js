@@ -20,6 +20,7 @@ import CloudUploadOutline from 'mdi-react/CloudUploadOutlineIcon'
 import LockAlertOutline from 'mdi-react/LockAlertOutlineIcon'
 import AccountOutline from 'mdi-react/AccountOutlineIcon'
 import SettingsIcon from 'mdi-react/SettingsIcon'
+import ChatIcon from 'mdi-react/ChatIcon'
 
 const map = {
   layersPlus: LayersPlusIcon,
@@ -43,6 +44,7 @@ const map = {
   lockAlertOutline: LockAlertOutline,
   accountOutline: AccountOutline,
   settings: SettingsIcon,
+  chat: ChatIcon,
 }
 
 const Icon = props => {

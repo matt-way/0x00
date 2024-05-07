@@ -50,6 +50,20 @@ export const denormalise = (config, blocks) => {
         })
       }),
     }
+    // dont save button input values, as they are purely used to detect
+    // clicks on the button during runtime
+    if (cBlock.inputValues) {
+      const properties = blocks[blockId].config.block.properties
+      result[name].inputValues = Object.keys(cBlock.inputValues).reduce(
+        (acc, propKey) => {
+          if (!(properties[propKey] && properties[propKey].type === 'button')) {
+            acc[propKey] = cBlock.inputValues[propKey]
+          }
+          return acc
+        },
+        {}
+      )
+    }
   })
 
   return {

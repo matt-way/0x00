@@ -135,6 +135,22 @@ export const { actions, reducer, constants } = buildModel(
         block.paused = paused
       }
     },
+    setForceRun: (blocks, blockId, forceRun) => {
+      const { block } = blocks[blockId].config
+      if (!forceRun) {
+        delete block.forceRun
+      } else {
+        block.forceRun = forceRun
+      }
+    },
+    showChat: (blocks, blockId, show) => {
+      const { block } = blocks[blockId].config
+      if (!show) {
+        delete block.showChat
+      } else {
+        block.showChat = show
+      }
+    },
   },
   () => ({
     [programConstants.reset]: () => initialState(),

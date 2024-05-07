@@ -1,23 +1,25 @@
-import v8 from 'v8'
-import requireFromString from 'require-from-string'
-import { join, isAbsolute } from 'path'
-import { subscribe, unsubscribe } from 'state-management/watcher'
-import {
-  addUpdateLink,
-  removeLink,
-  getOutgoingLinks,
-  getIncomingLinks,
-  activateLink,
-  removeAllLinks,
-  linkExists,
-} from './link-manager'
-import { transpile } from './transpile'
-import { writeFile, readFile } from 'fs-extra'
-import { md } from 'utils/markdown-literal'
-import * as programActions from 'state/program/interface'
 import * as blockActions from 'state/blocks/interface'
+import * as programActions from 'state/program/interface'
+
+import {
+  activateLink,
+  addUpdateLink,
+  getIncomingLinks,
+  getOutgoingLinks,
+  linkExists,
+  removeAllLinks,
+  removeLink,
+} from './link-manager'
+import { isAbsolute, join } from 'path'
+import { readFile, writeFile } from 'fs-extra'
+import { subscribe, unsubscribe } from 'state-management/watcher'
+
 import { getStore } from './store'
 import { isEqual } from 'lodash'
+import { md } from 'utils/markdown-literal'
+import requireFromString from 'require-from-string'
+import { transpile } from './transpile'
+import v8 from 'v8'
 
 const blocks = {}
 
@@ -30,13 +32,23 @@ function compareLink(a, b) {
 
 function createBlock(id, block, program) {
   blocks[id] = {
-    hasRan: false,
-    dormant: false,
     path: block.path,
     programPath: program.path,
     main: block.config.main,
     locked: block.config.locked,
+    forceRun: block.config.forceRun,
+    runIndex: 0, // this keeps track of which run function we have run
+
+    outputLinkChanges: {},
     updateBlocks: {},
+    paused: false,
+    enginePaused: false,
+    pauseState: [],
+    onChangeStore: [],
+
+    hasRan: false,
+    dormant: false,
+
     events: [],
     changeDeps: {},
     removeFuncs: {},
@@ -80,11 +92,18 @@ function createBlock(id, block, program) {
   )
 
   blocks[id].events.push(
-    subscribe(`blocks.${id}.saveBlockState`, saveBlockState => {
+    subscribe(`blocks.${id}.saveBlockState`, (saveBlockState, prev, state) => {
       if (saveBlockState && saveBlockState.path) {
         const clone = Object.keys(blocks[id].state).reduce((acc, key) => {
           // TODO: improve this, to strip out any value type that v8 cant handle
-          // or create a custom object that we fix up after deserialisation
+
+          // ensure no input property state is saved
+          const { inputValues = {} } = state.program.config.blocks[id]
+          // ensure no inlink state is saved as that should be the responsibility of the source block
+          const inLinks = getIncomingLinks(id)
+          if (inputValues[key] || inLinks[key]) {
+            return acc
+          }
           if (
             typeof blocks[id].state[key] !== 'function' &&
             blocks[id].state[key] !== null
@@ -113,7 +132,7 @@ function createBlock(id, block, program) {
           blocks[id].stateProxy[k] = restoredState[k]
         })
 
-        runIfAllowed(id)
+        attemptRun(id)
       }
     })
   )
@@ -164,7 +183,7 @@ function createBlock(id, block, program) {
         })
 
         // run any flagged blocks
-        Object.keys(flaggedBlocks).forEach(_id => runIfAllowed(_id))
+        Object.keys(flaggedBlocks).forEach(_id => attemptRun(_id))
       }
     )
   )
@@ -192,7 +211,7 @@ function createBlock(id, block, program) {
             }
           }
         })
-        runIfAllowed(id)
+        attemptRun(id)
       }
     )
   )
@@ -200,16 +219,20 @@ function createBlock(id, block, program) {
   // watch for code changes to run the block
   blocks[id].events.push(
     subscribe(`blocks.${id}.code`, async code => {
-      await buildRunFunction(id, code)
-      runIfAllowed(id)
+      blocks[id].codeInitialised = true
+      if (await buildRunFunction(id, code)) {
+        attemptRun(id)
+      }
     })
   )
 
   // rebuild and run if the dependencies change too
   blocks[id].events.push(
     subscribe(`blocks.${id}.dependencies`, async (deps, oldDeps, state) => {
-      await buildRunFunction(id, state.blocks[id].code)
-      runIfAllowed(id)
+      blocks[id].depsInitialised = true
+      if (await buildRunFunction(id, state.blocks[id].code)) {
+        attemptRun(id)
+      }
     })
   )
 
@@ -217,22 +240,17 @@ function createBlock(id, block, program) {
   blocks[id].events.push(
     subscribe(`blocks.${id}.config.locked`, locked => {
       if (!locked) {
-        delete blocks[id].locked
-        runIfAllowed(id)
+        blocks[id].locked = false
+        attemptRun(id)
       }
     })
   )
 
   blocks[id].events.push(
     subscribe(`program.engineRunning`, (isRunning, wasRunning) => {
-      blocks[id].running = isRunning
-      if (wasRunning !== undefined && isRunning && blocks[id].pauseState) {
-        const { hash, yieldValue } = blocks[id].pauseState
-        delete blocks[id].pauseState
-        runIfAllowed(id, hash, yieldValue)
-      } else if (wasRunning === undefined && !isRunning) {
-        // if the system starts in a paused state, we need to set each block as if it has been paused
-        blocks[id].pauseState = {}
+      blocks[id].enginePaused = !isRunning
+      if (wasRunning !== undefined && isRunning) {
+        resumeBlock(id)
       }
     })
   )
@@ -248,11 +266,20 @@ function createBlock(id, block, program) {
       `blocks.${id}.config.block.paused`,
       (isPaused, wasPaused, state) => {
         blocks[id].paused = isPaused
-        if (!isPaused && wasPaused && state.program.engineRunning) {
-          runIfAllowed(id)
+        if (!isPaused && wasPaused) {
+          resumeBlock(id)
         }
       }
     )
+  )
+
+  blocks[id].events.push(
+    subscribe(`blocks.${id}.config.block.forceRun`, (isForced, wasForced) => {
+      blocks[id].forceRun = isForced
+      if (isForced) {
+        attemptRun(id)
+      }
+    })
   )
 }
 
@@ -274,33 +301,20 @@ function removeBlock(id) {
 
 function attachBlockDom(id, element) {
   blocks[id].domElement = element
-  runIfAllowed(id)
+  attemptRun(id)
 }
 
 async function buildRunFunction(id, code) {
   // TODO: if the code fails to compile run() wont be set
   // and the engine will crash on this block. Need to setup a fix
   const block = blocks[id]
+  if (!block.codeInitialised || !block.depsInitialised) {
+    return false
+  }
   const transpiledResult = transpile(id, code)
   const blockFunction = requireFromString(transpiledResult.code, id)
-  block.run = blockFunction.default
-}
-
-function runIfAllowed(id, hash, yieldValue) {
-  if (
-    !blocks[id] ||
-    !blocks[id].domElement ||
-    !blocks[id].run ||
-    blocks[id].locked
-  ) {
-    return
-  }
-
-  if (Object.values(getIncomingLinks(id)).some(link => !link.activated)) {
-    return
-  }
-
-  runBlock(id, hash, yieldValue)
+  block.runFunction = blockFunction.default
+  return true
 }
 
 // This goes through all flagged output links needing to be run
@@ -323,37 +337,200 @@ function processPostLinks(block) {
       }
     })
     if (shouldAttemptRun) {
-      runIfAllowed(_blockId)
+      attemptRun(_blockId)
     }
   })
   block.updateBlocks = {}
 }
 
-async function runBlock(id, hash, yieldValue, currentTime) {
+function isBlockPaused(block) {
+  return block.paused || block.enginePaused
+}
+
+function attemptRun(id) {
   const block = blocks[id]
+  if (!block || !block.domElement || !block.runFunction || block.locked) {
+    return
+  }
 
+  if (
+    !block.forceRun &&
+    Object.values(getIncomingLinks(id)).some(link => !link.activated)
+  ) {
+    return
+  }
+
+  if (isBlockPaused(block)) {
+    block.scheduleRun = true
+    return
+  }
+
+  runBlock(id)
+}
+
+async function runBlock(id) {
+  const block = blocks[id]
   if (!block) {
-    // if blocks are removed, this catches missing data and stops any generator
     return
   }
 
-  block.dormant = false
+  block.runIndex++
+  block.onChangeIndex = 0
 
-  if (block.paused) {
-    return
+  // TODO: we need to prevent the previous run from continuing
+  if (block.pauseState.length > 0) {
+    block.pauseState.forEach(p => p.cancel())
+    block.pauseState = []
   }
 
-  if (!block.running) {
-    block.pauseState = { hash, yieldValue }
-    return
-  }
+  // reset the run scheduler
+  block.scheduleRun = false
 
-  if (!hash) {
-    delete block.generator
-    block.hash = hash = Math.random()
-  } else if (hash !== block.hash) {
+  try {
+    const domContainer = block.domElement.children[1]
+    await block.runFunction(
+      block.stateProxy, // state object
+      domContainer, // dom element
+      {
+        raf: createRafWrapper(block),
+        timeout: createTimeoutWrapper(block),
+        //intervalWrapper,
+        //awaitWrapper
+      },
+      // stateUpdated(key) function to force a propagation. Acts like an identity assignment
+      stateKey => {
+        block.stateProxy[stateKey] = block.stateProxy[stateKey]
+      },
+      // onChange function
+      async function (func, deps = [], ignoreInitialLoad) {
+        const prevStore =
+          block.onChangeStore[block.onChangeIndex] ||
+          (block.onChangeStore[block.onChangeIndex] = {})
+        const { deps: prevDeps } = prevStore
+
+        if (ignoreInitialLoad && prevDeps === undefined) {
+          prevStore.deps = deps
+        } else if (
+          prevDeps === undefined ||
+          deps.length !== prevDeps.length ||
+          deps.some((d, i) => d !== prevDeps[i])
+        ) {
+          prevStore.removeFunc = await func()
+          prevStore.deps = deps
+        }
+        block.onChangeIndex++
+      },
+      createHtmlHelper(domContainer),
+      createMdHelper(domContainer),
+      //cssHelper,
+      // __dirname override block path
+      block.path
+    )
+
+    processPostLinks(block)
+  } catch (err) {
+    console.error(err)
+    getStore().dispatch(programActions.runtimeBlockError(id, err))
+  }
+}
+
+// html literal function
+function createHtmlHelper(container) {
+  return (strings, ...values) => {
+    // TODO: improve the cleanup of the html string to avoid unwanted #text nodes
+    const html = strings
+      .reduce((result, str, i) => {
+        return `${result}${str}${values[i] || ''}`
+      }, '')
+      .replace(/(\r\n|\n|\r)/gm, '')
+    container.innerHTML = html
+
+    if (container.childNodes.length === 1) {
+      return container.childNodes[0]
+    }
+    return container.childNodes
+  }
+}
+
+function createMdHelper(container) {
+  return (...args) => {
+    const mdDom = md(...args)
+    container.innerHTML = mdDom
+  }
+}
+
+function createRafWrapper(block) {
+  // store the current run index in the closure
+  const runIndex = block.runIndex
+  return callback => {
+    if (isBlockPaused(block)) {
+      block.pauseState.push({
+        resume: () => {
+          requestAnimationFrame(ms => {
+            callback(ms)
+            processPostLinks(block)
+          })
+        },
+        cancel: () => {
+          // to cancel a raf just dont run it
+          return
+        },
+      })
+    } else {
+      // simply run the raf
+      requestAnimationFrame(ms => {
+        // cancel if run index was updated
+        if (runIndex !== block.runIndex) {
+          return
+        }
+        callback(ms)
+        processPostLinks(block)
+      })
+    }
+  }
+}
+
+function createTimeoutWrapper(block) {
+  const runIndex = block.runIndex
+  return (callback, ms) => {
+    setTimeout(() => {
+      if (runIndex !== block.runIndex) {
+        return
+      }
+      if (isBlockPaused(block)) {
+        block.pauseState.push({
+          resume: () => {
+            callback()
+            processPostLinks(block)
+          },
+          cancel: () => {
+            // to cancel just dont run setTimeout
+            return
+          },
+        })
+      } else {
+        callback()
+        processPostLinks(block)
+      }
+    }, ms)
+  }
+}
+
+async function resumeBlock(id) {
+  const block = blocks[id]
+  if (!block || isBlockPaused(block)) {
     return
   }
+  if (block.scheduleRun) {
+    attemptRun(id)
+  } else {
+    block.pauseState.forEach(p => p.resume())
+    block.pauseState = []
+  }
+}
+
+/*async function runBlock(id, hash, yieldValue, currentTime) {
+  const block = blocks[id]
 
   if (!block.generator) {
     block.changeIndex = 0
@@ -387,6 +564,10 @@ async function runBlock(id, hash, yieldValue, currentTime) {
           }, '')
           .replace(/(\r\n|\n|\r)/gm, '')
         domContainer.innerHTML = html
+
+        if (domContainer.childNodes.length === 1) {
+          return domContainer.childNodes[0]
+        }
         return domContainer.childNodes
       },
       // md literal function
@@ -404,7 +585,8 @@ async function runBlock(id, hash, yieldValue, currentTime) {
         domHead.appendChild(link)
       },
       // __dirname override block path
-      block.path
+      block.path,
+      currentTime
     )
   }
 
@@ -432,6 +614,6 @@ async function runBlock(id, hash, yieldValue, currentTime) {
     console.error(err)
     getStore().dispatch(programActions.runtimeBlockError(id, err))
   }
-}
+}*/
 
 export { createBlock, removeBlock, attachBlockDom }

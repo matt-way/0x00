@@ -56,6 +56,38 @@ const yieldAwait = ({ types: t }) => {
   }
 }
 
+const rafWrapper = ({ types: t }) => {
+  return {
+    visitor: {
+      CallExpression(path) {
+        const callee = path.node.callee
+
+        if (t.isIdentifier(callee) && callee.name === 'requestAnimationFrame') {
+          callee.name = 'controlFlow'
+          callee.property = t.identifier('raf')
+          path.node.callee = t.memberExpression(callee, callee.property)
+        }
+      },
+    },
+  }
+}
+
+const timeoutWrapper = ({ types: t }) => {
+  return {
+    visitor: {
+      CallExpression(path) {
+        const callee = path.node.callee
+
+        if (t.isIdentifier(callee) && callee.name === 'setTimeout') {
+          callee.name = 'controlFlow'
+          callee.property = t.identifier('timeout')
+          path.node.callee = t.memberExpression(callee, callee.property)
+        }
+      },
+    },
+  }
+}
+
 export const transpile = (
   blockId,
   code,
@@ -63,7 +95,8 @@ export const transpile = (
     plugins: [
       importCSS,
       importExtractor,
-      yieldAwait,
+      rafWrapper,
+      timeoutWrapper,
       [
         inlineImport,
         {
@@ -82,8 +115,15 @@ export const transpile = (
   // due to to wanting to use yield without a generator def,
   // we wrap the entire code with a generator and then move any
   // import nodes to the top of the program
+  /*const wrappedCode = `
+    export default async function* run(state, onChange, stateUpdated, element, html, md, requireCSS, __dirname, currentTime){      
+      ${code}
+    }
+
+    //# sourceURL=http://blocks/${blockId}.js
+  `*/
   const wrappedCode = `
-    export default async function* run(state, onChange, stateUpdated, element, html, md, requireCSS, __dirname){      
+    export default async function run(state, element, controlFlow, stateUpdated, onChange, html, md, __dirname){
       ${code}
     }
 

@@ -1,6 +1,6 @@
 import Module from 'module'
-import path from 'path'
 import builtinModules from 'builtin-modules'
+import path from 'path'
 import { requireCode } from './require-system'
 
 const MODULES_FOLDER = '/node_modules/'
@@ -34,22 +34,24 @@ Object.defineProperty(Module.prototype, 'require', {
       throw new Error(`Illegal require of ${moduleName}`)
     }
 
-    // if there is no parent module
+    const { dependencies } = store.getState().blocks[blockId]
+
+    // the module being loaded might be a child module of the parent
+    // but it could also be an already loaded sibling primary module
+    // always check for primary before attempting to load as child
     let parentModule
-    if (parentParts.length <= 0) {
-      if (moduleName[0] === '@') {
-        parentModule = `${moduleParts[0]}/${moduleParts[1]}`
-      } else {
-        parentModule = moduleParts[0]
-      }
+    if (moduleName[0] === '@') {
+      parentModule = `${moduleParts[0]}/${moduleParts[1]}`
     } else {
+      parentModule = moduleParts[0]
+    }
+
+    if (!dependencies[parentModule]) {
       parentModule = parentParts.shift()
       if (parentModule[0] === '@') {
         parentModule += `/${parentParts.shift()}`
       }
     }
-
-    const { dependencies } = store.getState().blocks[blockId]
 
     if (!dependencies[parentModule]) {
       throw new Error('Module not found: ' + moduleName)
@@ -58,7 +60,7 @@ Object.defineProperty(Module.prototype, 'require', {
     const { contents, dependencyAliases } = dependencies[parentModule]
 
     // we need to figure out if the module is relative, absolute, or a root package
-    let codePath
+    let codePaths = []
     if (moduleName[0] !== '.') {
       if (
         moduleParts.length === 1 ||
@@ -79,41 +81,64 @@ Object.defineProperty(Module.prototype, 'require', {
         // get the package json and figure out the main path to load
         const packagePath = `${MODULES_FOLDER}${moduleName}/package.json`
         const packageJson = JSON.parse(contents[packagePath].content)
-        codePath = joinSep(
-          MODULES_FOLDER,
-          moduleName,
-          (typeof packageJson.browser === 'string' && packageJson.browser) ||
-            packageJson.module ||
-            packageJson.main ||
-            'index.js'
-        )
+
+        if (packageJson.browser) {
+          if (typeof packageJson.browser === 'string') {
+            codePaths.push(
+              joinSep(MODULES_FOLDER, moduleName, packageJson.browser)
+            )
+          } else if (packageJson.browser[packageJson.module]) {
+            codePaths.push(
+              joinSep(
+                MODULES_FOLDER,
+                moduleName,
+                packageJson.browser[packageJson.module]
+              )
+            )
+          }
+        }
+        if (packageJson.module) {
+          codePaths.push(
+            joinSep(MODULES_FOLDER, moduleName, packageJson.module)
+          )
+        }
+        if (packageJson.main) {
+          codePaths.push(joinSep(MODULES_FOLDER, moduleName, packageJson.main))
+        }
+        codePaths.push(joinSep(MODULES_FOLDER, moduleName, 'index.js'))
 
         moduleStack.push(moduleName)
         primaryModule = true
       } else {
         // attempting to load an absolute file path
-        codePath = joinSep(MODULES_FOLDER, moduleName)
+        codePaths.push(joinSep(MODULES_FOLDER, moduleName))
       }
     } else {
       // attempting to load a relative path
       const parentPath = path.dirname(parentParts.join('/'))
-      codePath = `/${joinSep(parentPath, moduleName)}`
+      codePaths.push(`/${joinSep(parentPath, moduleName)}`)
     }
 
-    const potentialPaths = [codePath]
-    if (codePath[codePath.length - 1] === '/') {
-      potentialPaths.push(codePath + 'index.js')
-    } else if (!path.extname(codePath)) {
-      potentialPaths.push(codePath + '.js')
-      potentialPaths.push(codePath + '/index.js')
-    } else if (path.extname(codePath) !== '.js') {
-      potentialPaths.push(codePath + '.js')
+    let validPath
+    for (const cp of codePaths) {
+      const potentialPaths = [cp]
+      if (cp[cp.length - 1] === '/') {
+        potentialPaths.push(cp + 'index.js')
+      } else if (!path.extname(cp)) {
+        potentialPaths.push(cp + '.js')
+        potentialPaths.push(cp + '/index.js')
+      } else if (path.extname(cp) !== '.js') {
+        potentialPaths.push(cp + '.js')
+      }
+      validPath = potentialPaths.find(p => contents[p])
+      if (validPath) {
+        break
+      }
     }
 
-    const validPath = potentialPaths.find(p => contents[p])
     if (!validPath) {
       throw new Error(
-        `Unable to find module path ${codePath}, for parent module ${parentModule}`
+        `Unable to find matching module for paths ${codePaths}, for parent module ${parentModule}`
       )
     }
 
