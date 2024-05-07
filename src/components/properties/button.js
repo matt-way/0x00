@@ -1,8 +1,9 @@
 /** @jsxImportSource theme-ui */
+
 import { Button } from 'components/system'
 
 const UpdateButton = props => {
-  const { id, value = false, updateValue } = props
+  const { id, value, updateValue } = props
   return (
     <div>
       <span
@@ -16,7 +17,7 @@ const UpdateButton = props => {
           fontSize: 11,
         }}
         onClick={async () => {
-          updateValue(!value)
+          updateValue(Date.now())
         }}>
         Trigger
       </Button>

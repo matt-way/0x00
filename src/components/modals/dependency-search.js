@@ -1,9 +1,11 @@
 /** @jsxImportSource theme-ui */
-import { useState } from 'state-management/hooks'
-import { useSelectedBlock } from 'state/blocks/hooks'
-import { PopMenu, Input, Button, Link } from 'components/system'
+
+import { Button, Input, Link, PopMenu } from 'components/system'
+
 import { invoke } from 'ipc/renderer'
 import { searchDependencies } from 'utils/jsdelivr'
+import { useSelectedBlock } from 'state/blocks/hooks'
+import { useState } from 'state-management/hooks'
 
 const DependencySearch = props => {
   const { close } = props

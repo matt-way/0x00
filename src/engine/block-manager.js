@@ -1,23 +1,25 @@
-import v8 from 'v8'
-import requireFromString from 'require-from-string'
-import { join, isAbsolute } from 'path'
-import { subscribe, unsubscribe } from 'state-management/watcher'
-import {
-  addUpdateLink,
-  removeLink,
-  getOutgoingLinks,
-  getIncomingLinks,
-  activateLink,
-  removeAllLinks,
-  linkExists,
-} from './link-manager'
-import { transpile } from './transpile'
-import { writeFile, readFile } from 'fs-extra'
-import { md } from 'utils/markdown-literal'
-import * as programActions from 'state/program/interface'
 import * as blockActions from 'state/blocks/interface'
+import * as programActions from 'state/program/interface'
+
+import {
+  activateLink,
+  addUpdateLink,
+  getIncomingLinks,
+  getOutgoingLinks,
+  linkExists,
+  removeAllLinks,
+  removeLink,
+} from './link-manager'
+import { isAbsolute, join } from 'path'
+import { readFile, writeFile } from 'fs-extra'
+import { subscribe, unsubscribe } from 'state-management/watcher'
+
 import { getStore } from './store'
 import { isEqual } from 'lodash'
+import { md } from 'utils/markdown-literal'
+import requireFromString from 'require-from-string'
+import { transpile } from './transpile'
+import v8 from 'v8'
 
 const blocks = {}
 
@@ -39,7 +41,7 @@ function createBlock(id, block, program) {
 
     outputLinkChanges: {},
     updateBlocks: {},
-    paused: false,    
+    paused: false,
     enginePaused: false,
     pauseState: [],
     onChangeStore: [],
@@ -90,11 +92,18 @@ function createBlock(id, block, program) {
   )
 
   blocks[id].events.push(
-    subscribe(`blocks.${id}.saveBlockState`, saveBlockState => {
+    subscribe(`blocks.${id}.saveBlockState`, (saveBlockState, prev, state) => {
       if (saveBlockState && saveBlockState.path) {
         const clone = Object.keys(blocks[id].state).reduce((acc, key) => {
           // TODO: improve this, to strip out any value type that v8 cant handle
-          // or create a custom object that we fix up after deserialisation
+
+          // ensure no input property state is saved
+          const { inputValues = {} } = state.program.config.blocks[id]
+          // ensure no inlink state is saved as that should be the responsibility of the source block
+          const inLinks = getIncomingLinks(id)
+          if (inputValues[key] || inLinks[key]) {
+            return acc
+          }
           if (
             typeof blocks[id].state[key] !== 'function' &&
             blocks[id].state[key] !== null
@@ -265,15 +274,12 @@ function createBlock(id, block, program) {
   )
 
   blocks[id].events.push(
-    subscribe(
-      `blocks.${id}.config.block.forceRun`,
-      (isForced, wasForced) => {
-        blocks[id].forceRun = isForced
-        if (isForced) {
-          attemptRun(id)
-        }
+    subscribe(`blocks.${id}.config.block.forceRun`, (isForced, wasForced) => {
+      blocks[id].forceRun = isForced
+      if (isForced) {
+        attemptRun(id)
       }
-    )
+    })
   )
 }
 
@@ -306,7 +312,6 @@ async function buildRunFunction(id, code) {
     return false
   }
   const transpiledResult = transpile(id, code)
-  console.log(transpiledResult.code)
   const blockFunction = requireFromString(transpiledResult.code, id)
   block.runFunction = blockFunction.default
   return true
@@ -347,8 +352,11 @@ function attemptRun(id) {
   if (!block || !block.domElement || !block.runFunction || block.locked) {
     return
   }
-  
-  if (!block.forceRun && Object.values(getIncomingLinks(id)).some(link => !link.activated)) {
+
+  if (
+    !block.forceRun &&
+    Object.values(getIncomingLinks(id)).some(link => !link.activated)
+  ) {
     return
   }
 
@@ -394,17 +402,20 @@ async function runBlock(id) {
         block.stateProxy[stateKey] = block.stateProxy[stateKey]
       },
       // onChange function
-      function (func, deps = []) {
+      async function (func, deps = [], ignoreInitialLoad) {
         const prevStore =
           block.onChangeStore[block.onChangeIndex] ||
           (block.onChangeStore[block.onChangeIndex] = {})
         const { deps: prevDeps } = prevStore
-        if (
+
+        if (ignoreInitialLoad && prevDeps === undefined) {
+          prevStore.deps = deps
+        } else if (
           prevDeps === undefined ||
           deps.length !== prevDeps.length ||
           deps.some((d, i) => d !== prevDeps[i])
         ) {
-          prevStore.removeFunc = func()
+          prevStore.removeFunc = await func()
           prevStore.deps = deps
         }
         block.onChangeIndex++
