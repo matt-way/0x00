@@ -1,7 +1,7 @@
-import { transform } from '@babel/core'
 import importExport from '@babel/plugin-transform-modules-commonjs'
-import react from '@babel/preset-react'
 import inlineImport from 'babel-plugin-inline-import'
+import react from '@babel/preset-react'
+import { transform } from '@babel/core'
 
 const importCSS = ({ types: t }) => {
   return {
@@ -112,16 +112,6 @@ export const transpile = (
     //ast: true
   }
 ) => {
-  // due to to wanting to use yield without a generator def,
-  // we wrap the entire code with a generator and then move any
-  // import nodes to the top of the program
-  /*const wrappedCode = `
-    export default async function* run(state, onChange, stateUpdated, element, html, md, requireCSS, __dirname, currentTime){      
-      ${code}
-    }
-
-    //# sourceURL=http://blocks/${blockId}.js
-  `*/
   const wrappedCode = `
     export default async function run(state, element, controlFlow, stateUpdated, onChange, html, md, __dirname){
       ${code}

@@ -30,7 +30,7 @@ There are a few variables available to your block code to make things easier. So
 
 ### `element` & template helpers: (`md`, `html`)
 
-This is the root dom element provided to the block. It is a `div` part of a shadow dom, so any styling, etc. won't pollute other block areas. To find children, use `element.querySelector()` instead of `document.getElementById()`, as shadow dom id's won't be accessible.
+`element` is the root dom element provided to the block. It is a `div` part of a shadow dom, so any styling, etc. won't pollute other block areas. To find children, use `element.querySelector()` instead of `document.getElementById()`, as shadow dom id's won't be accessible.
 
 Also provided are helper string template literals to embed different content easily inside your block div. These run in order, and will overwrite each other if multiple are used. At the present time there are only two options. `md` for outputting markdown, and `html` for outputting raw html. For example.
 
@@ -39,69 +39,89 @@ md`##Hello, this is a title in markdown`
 ```
 
 ```
-html`<h2 id="#title">This is a title using html</h2>`
+// html`` returns the outer element for easy use
+const theH2 = html`<h2 id="#title">This is a title using html</h2>`
 ```
 
 ### `state` & `stateUpdated(propertyName)`
 
-This is the persistent state object for your block, as well as the glue that lets you read and write to block properties. Whenever the block is rerun (either via a code change or a connection update), this state persists with the same values. Only a full program reset will reset the state to an empty object.
+This is the persistent state object for your block, as well as the glue that lets you read and write to block properties. Whenever the block is rerun (either via a code change or a connection update), this state remains unchanged. Only a full program reset will reset the state to an empty object.
 
 If you set a value on the state whose key matches the name of a property, any block with a connection from this property will be rerun with this newly updated value.
 
 For example:
 
 ```
-// If the block has a property called myValue, then any other blocks this property connects to will be rerun
+// If a block has a property called myValue, then any other blocks this property connects to will be rerun when this value is set
 state.myValue = 100
 
-// This will not trigger a state update, as only top level state keys are watched
+// This set below will not trigger a state update, as only top level state keys are watched
 state.myObject.childKey = 10
 
-// this will force an update message that state.myObject has been updated, triggering a connected block rerun
-stateUpdated(myObject)
+// this will force an update message that state.myObject has been updated, triggering a connected block to rerun
+stateUpdated('myObject')
 ```
 
-### `onChange(runFunc, [depArray])`
+### `onChange(runFunc, [depArray], ignoreInitialLoad)`
 
-Code inside a block reruns whenever the code changes, or whenever input state values change. Usually you want to run some sort of initialisation code that only runs once, or runs whenever specific values change. This can be done using the `onChange()` function. The inner function will only run once, and then any time the provided `depArray` values change. If no array is given, then the function only runs once. A full program reset will cause these functions to run again. It can be used multiple times, and they will run in execution order.
+Code inside a block reruns whenever the code changes, or whenever input state values change. Usually you want to run some sort of initialisation code that only runs once, or you might want some code to run whenever specific values change, or on say a button click. This can be done using the `onChange()` function. The first param `runFunc` is a function that runs whenever any of the `[depArray]` changes. An empty `depArray` will only run once (first run of the block), and it useful for state initialisation. Setting `ignoreInitialLoad` to true will cause the `runFunc` to ONLY run when the deps change. It will not run during the first run pass.
+
+`onChange` can be used multiple times, and they will run in execution order.
 
 ```
+// this will only run once on start creating a canvas
 onChange(() => {
-  html`<canvas id="c"/>` // This will setup the inner html only once
-})
+  html`<canvas id="c"/>`
+}, [])
 
+// this will run whenever the state.myValue is changed (including on first run)
 onChange(() => {
   // do something whenever specific state changes
 }, [state.myValue])
 
-console.log(element.querySelector('#c')) // this will log the canvas setup above.
+// this will only run when state.test is changed, it will not run on first pass
+onChange(() => {
+  // do something
+}, [state.test], true)
+
+console.log(element.querySelector('#c')) // this will log the canvas that was set up int he first example above.
 ```
 
 **Cleanup on block removal**
 
-Sometimes you want to run cleanup code when a block is removed. If you returns a function from within a `runOnce()` function, this function will be run whenever a block is removed. For example:
+Sometimes you want to run cleanup code when a block is removed. If you return a function from within an `onChange()` `runFunc`, this function will be run whenever a block is removed. For example:
 
 ```
-runOnce(() => {
+onChange(() => {
   // do initialisation work here
 
   // return a function that you want to run when a block is removed
   return () => {
     // do cleanup here
   }
-})
+}, [])
 ```
 
-### Animations with `yield`
+This is useful for situations where you want to set something up on first run (a webcam for example), which requires shut down code when finished using (so that a program reset wouldn't try and initialise again over the top of previous code).
 
-The engine that runs the blocks works with an internal `requestAnimationFrame()` system. Whenever you use the keyword `yield` inside a block, this tells the engine to jump out, and not jump back into the code until the next frame. This makes animating things quite easy. For example, the code below will render the numbers 0-599 in the output for each animation frame (a 10 second duration given a 60fps rate).
+### Animations
+
+A powerful feature of null is the ability to have blocks run animation loops, allowing you to update and propagate state through the program. To do this you just need to use `requestAnimationFrame()` in the same way you would in any other javascript program. Behind the scenes Null has rewritten the raf to manage state propagation. Inside the program settings, the frameRate for raf can also be changed if needed. This allows you to run more or less work in a block per render pass.
 
 ```
-for(let i=0; i<600; i++){
-  md`${i}`
-  yield
+// this will update and propagate counter state each frame, also updating some markdown output
+state.counter = 0
+
+function run() {
+  md`The counter is at: ${state.counter}`
+  state.counter++
+  requestAnimationFrame(run)
 }
+
+run()
 ```
+
+While animations are running, the program pause button also works as expected, halting the program at the last raf call until play is pressed.
 
 ### `__dirname`
 
