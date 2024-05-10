@@ -311,7 +311,7 @@ async function buildRunFunction(id, code) {
   if (!block.codeInitialised || !block.depsInitialised) {
     return false
   }
-  const transpiledResult = transpile(id, code)
+  const transpiledResult = transpile(block, code)
   const blockFunction = requireFromString(transpiledResult.code, id)
   block.runFunction = blockFunction.default
   return true

@@ -88,8 +88,12 @@ const timeoutWrapper = ({ types: t }) => {
   }
 }
 
+function splitPath(path) {
+  return path.split(/[/\\]+/)
+}
+
 export const transpile = (
-  blockId,
+  block,
   code,
   options = {
     plugins: [
@@ -112,12 +116,14 @@ export const transpile = (
     //ast: true
   }
 ) => {
+  const pathParts = splitPath(block.path)
+  const path = pathParts[pathParts.length - 1]
   const wrappedCode = `
     export default async function run(state, element, controlFlow, stateUpdated, onChange, html, md, __dirname){
       ${code}
     }
 
-    //# sourceURL=http://blocks/${blockId}.js
+    //# sourceURL=http://blocks/${path}/code.js
   `
 
   return transform(wrappedCode, options)
