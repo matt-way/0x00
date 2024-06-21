@@ -365,7 +365,16 @@ function attemptRun(id) {
     return
   }
 
-  runBlock(id)
+  // if the block is set to force run, then it is able to be a part
+  // of feedback loops that can cause blocking, so force any of these
+  // to run in a raf
+  if (block.forceRun) {
+    requestAnimationFrame(() => {
+      runBlock(id)
+    })
+  } else {
+    runBlock(id)
+  }
 }
 
 async function runBlock(id) {
