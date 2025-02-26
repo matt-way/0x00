@@ -14,6 +14,7 @@ import { isAbsolute, join } from 'path'
 import { readFile, writeFile } from 'fs-extra'
 import { subscribe, unsubscribe } from 'state-management/watcher'
 
+import { deepCleanObject } from 'utils/object'
 import { getStore } from './store'
 import { isEqual } from 'lodash'
 import { md } from 'utils/markdown-literal'
@@ -95,8 +96,6 @@ function createBlock(id, block, program) {
     subscribe(`blocks.${id}.saveBlockState`, (saveBlockState, prev, state) => {
       if (saveBlockState && saveBlockState.path) {
         const clone = Object.keys(blocks[id].state).reduce((acc, key) => {
-          // TODO: improve this, to strip out any value type that v8 cant handle
-
           // ensure no input property state is saved
           const { inputValues = {} } = state.program.config.blocks[id]
           // ensure no inlink state is saved as that should be the responsibility of the source block
@@ -104,12 +103,8 @@ function createBlock(id, block, program) {
           if (inputValues[key] || inLinks[key]) {
             return acc
           }
-          if (
-            typeof blocks[id].state[key] !== 'function' &&
-            blocks[id].state[key] !== null
-          ) {
-            acc[key] = blocks[id].state[key]
-          }
+
+          acc[key] = deepCleanObject(blocks[id].state[key])
           return acc
         }, {})
 
