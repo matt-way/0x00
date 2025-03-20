@@ -36,7 +36,7 @@
     "chokidar": "^3.5.3",
     "dotenv-webpack": "^8.0.1",
     "double-ended-queue": "^2.1.0-0",
-    "electron": "^17.0.1",
+    "electron": "^34.2.0",
     "electron-fetch": "^1.7.4",
     "esm-wallaby": "^3.2.25",
     "firebase": "^9.6.11",

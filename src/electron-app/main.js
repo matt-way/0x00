@@ -1,19 +1,20 @@
-import installExtension, { REDUX_DEVTOOLS } from 'electron-devtools-installer'
-import { app, BrowserView, BrowserWindow, protocol } from 'electron'
-import { join, normalize } from './disk/path'
-import { initApplicationMenu } from './application-menu'
-import { initSettings } from './settings'
-import { initBlocks } from './blocks'
-import { initProgram } from './program'
-import { initProperties } from './properties'
-import { subscribe } from 'state-management/watcher'
+import { BrowserView, BrowserWindow, app, protocol } from 'electron'
 import {
-  initialiseEngineWindow,
   attachEngine,
   detachEngine,
+  initialiseEngineWindow,
   reloadEngine,
 } from './engine'
+import installExtension, { REDUX_DEVTOOLS } from 'electron-devtools-installer'
+import { join, normalize } from './disk/path'
+
+import { initApplicationMenu } from './application-menu'
+import { initBlocks } from './blocks'
 import { initContextMenu } from 'electron-react-context-menu/main'
+import { initProgram } from './program'
+import { initProperties } from './properties'
+import { initSettings } from './settings'
+import { subscribe } from 'state-management/watcher'
 
 let mainWindow
 
@@ -21,8 +22,9 @@ function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
     webPreferences: {
-      nativeWindowOpen: true,
+      //nativeWindowOpen: true,
       preload: join(__dirname, 'preload-esm.js'),
+      sandbox: false,
     },
     width: 1200,
     height: 900,
