@@ -1,7 +1,7 @@
 import { actions } from './model'
-import prettier from 'prettier/standalone'
-import parserBabel from 'prettier/parser-babel'
 import defaultSettings from '../settings/definitions'
+import parserBabel from 'prettier/parser-babel'
+import prettier from 'prettier/standalone'
 
 export const updateCode = actions.updateCode
 export const saveCode = blockId => async (dispatch, getState) => {

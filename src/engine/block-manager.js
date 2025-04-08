@@ -14,13 +14,14 @@ import { isAbsolute, join } from 'path'
 import { readFile, writeFile } from 'fs-extra'
 import { subscribe, unsubscribe } from 'state-management/watcher'
 
-import { deepCleanObject } from 'utils/object'
 import { getStore } from './store'
-import { isEqual } from 'lodash'
+import { isValidSerialisable } from 'utils/object'
 import { md } from 'utils/markdown-literal'
 import requireFromString from 'require-from-string'
 import { transpile } from './transpile'
 import v8 from 'v8'
+
+//import { isEqual } from 'lodash'
 
 const blocks = {}
 
@@ -31,7 +32,7 @@ function compareLink(a, b) {
   return aKey === bKey && a[aKey] === b[bKey]
 }
 
-function createBlock(id, block, program) {
+async function createBlock(id, block, program) {
   blocks[id] = {
     path: block.path,
     programPath: program.path,
@@ -87,12 +88,6 @@ function createBlock(id, block, program) {
   })
 
   blocks[id].events.push(
-    subscribe(`blocks.${id}.path`, newPath => {
-      blocks[id].path = newPath
-    })
-  )
-
-  blocks[id].events.push(
     subscribe(`blocks.${id}.saveBlockState`, (saveBlockState, prev, state) => {
       if (saveBlockState && saveBlockState.path) {
         const clone = Object.keys(blocks[id].state).reduce((acc, key) => {
@@ -104,7 +99,9 @@ function createBlock(id, block, program) {
             return acc
           }
 
-          acc[key] = deepCleanObject(blocks[id].state[key])
+          if (isValidSerialisable(blocks[id].state[key])) {
+            acc[key] = blocks[id].state[key]
+          }
           return acc
         }, {})
 
@@ -276,6 +273,20 @@ function createBlock(id, block, program) {
       }
     })
   )
+
+  // once the state proxy is built (and subscriptions managed), if the block has a state loader on reset set the appropriate keys here
+  if (program.config?.blocks?.[id]?.autoloadStatePath) {
+    const statePath = join(
+      program.path,
+      program.config.blocks[id].autoloadStatePath
+    )
+    const data = await readFile(statePath)
+    const restoredState = v8.deserialize(data)
+    Object.keys(restoredState).forEach(k => {
+      blocks[id].stateProxy[k] = restoredState[k]
+    })
+    console.log(`State auto loaded for ${block.name}`)
+  }
 }
 
 function removeBlock(id) {

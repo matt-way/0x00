@@ -1,10 +1,13 @@
 /** @jsxImportSource theme-ui */
+
+import Dependencies from './dependencies'
+import GeneralInformation from './general-information'
+import StateSettings from './state-settings'
+import { invoke } from 'ipc/renderer'
 import { useBlock } from 'state/blocks/hooks'
 import { useToastActions } from 'state/toasts/hooks'
-import GeneralInformation from './general-information'
+
 //import PropertyList from './property-list'
-import Dependencies from './dependencies'
-import { invoke } from 'ipc/renderer'
 
 const BlockInformation = props => {
   const { id } = props
@@ -34,6 +37,7 @@ const BlockInformation = props => {
           packages={dependencies}
           uninstallDependency={invoke.blocks.uninstallDependency}
         />
+        <StateSettings blockId={id} />
       </div>
     </div>
   )

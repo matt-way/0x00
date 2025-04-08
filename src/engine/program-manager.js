@@ -1,6 +1,7 @@
-import { subscribe } from 'state-management/watcher'
-import { difference } from 'lodash'
 import { createBlock, removeBlock } from './block-manager'
+
+import { difference } from 'lodash'
+import { subscribe } from 'state-management/watcher'
 
 function startProgramManager() {
   subscribe(

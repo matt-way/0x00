@@ -1,6 +1,7 @@
-import { set } from 'lodash'
-import { buildModel } from 'state-management/builder'
+import { set, update } from 'lodash'
+
 import { constants as blockConstants } from '../blocks/model'
+import { buildModel } from 'state-management/builder'
 
 const initialState = () => ({
   engineRunning: true,
@@ -44,6 +45,14 @@ export const { actions, reducer, constants } = buildModel(
         block.inputValues = {}
       }
       block.inputValues[propertyId] = value
+    },
+    updateAutoloadStatePath: (program, blockId, path) => {
+      const block = program.config.blocks[blockId]
+      if (path && path.length > 0) {
+        block.autoloadStatePath = path
+      } else {
+        delete block.autoloadStatePath
+      }
     },
     createLink: (
       program,
