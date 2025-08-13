@@ -1,7 +1,14 @@
 const Error = props => {
   const { error } = props
 
-  const [message, ...parts] = error.stack.split('\n')
+  let message = '',
+    parts = []
+  if (error.stack) {
+    ;[message, ...parts] = error.stack.split('\n')
+  } else {
+    message = error
+  }
+
   const runIndex = parts.findIndex(p => p.includes('Object.run (http://blocks'))
   const stackToShow = runIndex >= 0 ? parts.slice(0, runIndex + 1) : parts
 
