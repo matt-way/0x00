@@ -14,6 +14,7 @@ const joinSep = (...args) => {
   return path.join(...args).replace(/\\/g, '/')
 }
 
+/*
 Object.defineProperty(Module.prototype, 'require', {
   value: function require(moduleName) {
     let primaryModule = false
@@ -107,6 +108,23 @@ Object.defineProperty(Module.prototype, 'require', {
         }
         codePaths.push(joinSep(MODULES_FOLDER, moduleName, 'index.js'))
 
+        // handle newer exports key
+        if (packageJson.exports) {
+          const subpath =
+            moduleParts.length > 1 ? './' + moduleParts.slice(1).join('/') : '.'
+          const target = packageJson.exports[subpath]
+          if (target) {
+            if (typeof target === 'string') {
+              codePaths.push(joinSep(MODULES_FOLDER, parentModule, target))
+            } else {
+              const value = target.import || target.default
+              if (value) {
+                codePaths.push(joinSep(MODULES_FOLDER, parentModule, value))
+              }
+            }
+          }
+        }
+
         moduleStack.push(moduleName)
         primaryModule = true
       } else {
@@ -156,6 +174,8 @@ Object.defineProperty(Module.prototype, 'require', {
     return result
   },
 })
+
+*/
 
 const setRequireStore = _store => {
   store = _store

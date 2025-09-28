@@ -11,6 +11,7 @@ import { join, normalize } from './disk/path'
 import { initApplicationMenu } from './application-menu'
 import { initBlocks } from './blocks'
 import { initContextMenu } from 'electron-react-context-menu/main'
+import { initDependencyProtocolHandler } from './dependencies'
 import { initProgram } from './program'
 import { initProperties } from './properties'
 import { initSettings } from './settings'
@@ -60,6 +61,8 @@ app.whenReady().then(() => {
     .catch(err =>
       console.log('An error occurred installing the extension: ', err)
     )
+
+  initDependencyProtocolHandler()
 
   protocol.registerFileProtocol('asset', (req, cb) => {
     const url = req.url.substr(8)

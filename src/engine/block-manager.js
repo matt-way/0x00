@@ -317,9 +317,16 @@ async function buildRunFunction(id, code) {
   if (!block.codeInitialised || !block.depsInitialised) {
     return false
   }
-  const transpiledResult = transpile(block, code)
-  const blockFunction = requireFromString(transpiledResult.code, id)
-  block.runFunction = blockFunction.default
+  const transpiledResult = transpile(id, block, code)
+  //const blockFunction = requireFromString(transpiledResult.code, id)
+  const codeUrl = `data:text/javascript;base64,${Buffer.from(
+    transpiledResult.code,
+    'utf8'
+  ).toString('base64')}`
+  // the webpack ignore must go here so that webpack doesnt try and handle this import in any way
+  const mod = await import(/* webpackIgnore: true */ codeUrl)
+  //block.runFunction = blockFunction.default
+  block.runFunction = mod.default
   return true
 }
 

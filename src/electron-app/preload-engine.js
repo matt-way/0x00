@@ -1,6 +1,7 @@
+import * as channels from 'electron-redux-ipc/channels'
+
 import ipcConstants from 'ipc/constants'
 import { ipcRenderer } from 'electron'
-import * as channels from 'electron-redux-ipc/channels'
 
 // this takes all our ipc channels and turns them into callable
 // invoke functions. The electron guides promote not exposing the

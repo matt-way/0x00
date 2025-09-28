@@ -1,3 +1,4 @@
+import builtinModules from 'builtin-modules'
 import importExport from '@babel/plugin-transform-modules-commonjs'
 import inlineImport from 'babel-plugin-inline-import'
 import react from '@babel/preset-react'
@@ -20,13 +21,17 @@ const importCSS = ({ types: t }) => {
   }
 }
 
-const importExtractor = () => {
+const importExtractor = blockId => {
   return {
     visitor: {
       ImportDeclaration(path) {
         const programPath = path.findParent(parentPath =>
           parentPath.isProgram()
         )
+        const source = path.node.source.value
+        if (!builtinModules.includes(source) && source !== 'electron') {
+          path.node.source.value = `dep://${blockId}//${source}`
+        }
         programPath.node.body = [path.node, ...programPath.node.body]
         path.remove()
       },
@@ -93,12 +98,13 @@ function splitPath(path) {
 }
 
 export const transpile = (
+  id,
   block,
   code,
   options = {
     plugins: [
       importCSS,
-      importExtractor,
+      importExtractor(id),
       rafWrapper,
       timeoutWrapper,
       [
@@ -107,7 +113,7 @@ export const transpile = (
           extensions: ['.txt', '.md', '.css'],
         },
       ],
-      importExport,
+      //importExport,
     ],
     presets: [react],
     parserOpts: {
@@ -127,13 +133,4 @@ export const transpile = (
   `
 
   return transform(wrappedCode, options)
-}
-
-export const esToCjs = (
-  code,
-  options = {
-    plugins: [importExport],
-  }
-) => {
-  return transform(code, options)
 }

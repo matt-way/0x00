@@ -1,7 +1,8 @@
-import { BrowserWindow, BrowserView } from 'electron'
-import { join } from './disk/path'
+import { BrowserView, BrowserWindow } from 'electron'
+
 import { handle } from 'ipc/main'
 import ipcConstants from 'ipc/constants'
+import { join } from './disk/path'
 
 var engineWindow, engineView
 var attached = true

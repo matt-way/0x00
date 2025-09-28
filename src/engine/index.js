@@ -1,14 +1,20 @@
-import { setRequireStore } from './limit-node'
-import ReactDOM from 'react-dom'
-import { Provider } from 'react-redux'
-import { ThemeProvider } from 'theme-ui'
-import darkTheme from 'themes/dark'
-import { startProgramManager } from './program-manager'
 import Program from './components/program'
-import { startWatcher } from 'state-management/watcher'
+import { Provider } from 'react-redux'
+import ReactDOM from 'react-dom'
+import { ThemeProvider } from 'theme-ui'
 import { createStore } from './store'
+import darkTheme from 'themes/dark'
+import { setRequireStore } from './limit-node'
+import { startProgramManager } from './program-manager'
+import { startWatcher } from 'state-management/watcher'
 
 async function start() {
+  // hack to prevent things thinking this is node
+  Object.defineProperty(process.versions, 'node', {
+    value: undefined,
+    configurable: true,
+  })
+
   const store = await createStore()
 
   setRequireStore(store)
