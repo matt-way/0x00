@@ -1,6 +1,6 @@
 function isValidSerialisable(obj, seen = new Set()) {
-  if (obj === null || typeof obj !== 'object') return true
   if (typeof obj === 'function') return false
+  if (obj === null || typeof obj !== 'object') return true
   if (seen.has(obj)) return true
   seen.add(obj)
 
