@@ -151,6 +151,310 @@ export const installDependency = async (depName, version) => {
   return dep
 }
 
+export function initDependencyProtocolHandler() {
+  protocol.handle('dep', async request => {
+    const url = new URL(request.url)
+
+    // Expect dep://<host>/<path>?<query>
+    const upstream = `https://${url.hostname}${url.pathname}${url.search}`
+
+    const res = await fetch(upstream)
+
+    return new Response(res.body, {
+      status: res.status,
+      headers: {
+        // Preserve content type; default to JS if missing
+        'Content-Type': res.headers.get('content-type') || 'text/javascript',
+      },
+    })
+  })
+}
+
+/*
+function flattenDependencyContents(dependencies) {
+  // Returns a flat { [absolutePath]: fileRecord } map across ALL dependencies.
+  // Later wins on collisions (deterministic by iteration order).
+  const vfs = Object.create(null)
+
+  if (!dependencies) return vfs
+
+  for (const depName of Object.keys(dependencies)) {
+    const dep = dependencies[depName]
+    const contents = dep && dep.contents
+    if (!contents) continue
+
+    for (const p of Object.keys(contents)) {
+      // Keep paths exactly as stored (your resolver expects absolute "/node_modules/..." keys).
+      vfs[p] = contents[p]
+    }
+  }
+
+  return vfs
+}
+
+function parsePackageNameAndSubpath(rawPath) {
+  let packageName, packagePath
+
+  if (rawPath.startsWith('@')) {
+    // Scoped package
+    const parts = rawPath.split('/')
+    packageName = `${parts[0]}/${parts[1]}`
+    packagePath = parts.slice(2).join('/') || null
+  } else {
+    const parts = rawPath.split('/')
+    packageName = parts[0]
+    packagePath = parts.slice(1).join('/') || null
+  }
+
+  return { packageName, packagePath }
+}
+
+let doneOne = false
+
+export function initDependencyProtocolHandler() {
+  const MODULES_FOLDER = '/node_modules/'
+
+  protocol.handle('dep', async request => {
+    const url = new URL(request.url)
+
+    const blockId = url.hostname
+    const block = store.getState().blocks[blockId]
+    if (!block) {
+      return new Response(`Unknown block: ${blockId}`, { status: 404 })
+    }
+
+    const { dependencies } = block
+    const rawPackagePath = url.pathname.slice(2)
+
+    console.log('rpp:', request.url)
+
+    const vfs = flattenDependencyContents(dependencies)
+
+    if (!vfs[rawPackagePath]) {
+      const suffixes = ['.js', '.mjs', '.cjs', '/index.js']
+
+      for (const s of suffixes) {
+        const altered = rawPackagePath + s
+        if (vfs[altered]) {
+          return new Response(null, {
+            status: 302,
+            headers: { Location: `dep://${blockId}//${altered}` },
+          })
+        }
+      }
+    }
+
+    // handle json if found
+    if (vfs[rawPackagePath] && rawPackagePath.endsWith('.json')) {
+      const jsonText = vfs[rawPackagePath].content
+      // Don’t parse/stringify if you don’t need to; but parsing lets you validate.
+      let obj
+      try {
+        obj = JSON.parse(jsonText)
+      } catch {
+        obj = null
+      }
+
+      if (!obj)
+        return new Response(`Invalid JSON: ${rawPackagePath}`, { status: 500 })
+
+      const code =
+        `export default ${JSON.stringify(obj)};\n` +
+        // optional convenience for common fields AWS imports
+        (obj.version
+          ? `export const version = ${JSON.stringify(obj.version)};\n`
+          : '')
+
+      return new Response(code, {
+        headers: { 'Content-Type': 'text/javascript' },
+      })
+    }
+
+    if (vfs[rawPackagePath]) {
+      const file = vfs[rawPackagePath]
+      let code = file.content
+
+      if (file.isModule === false) {
+        code = wrapCjsAsEsm(code)
+      } else {
+        code = transpileBareImports(code, blockId)
+      }
+
+      return new Response(code, {
+        headers: { 'Content-Type': 'text/javascript' },
+      })
+    }
+
+    // Try and resolve a package.json
+    const { packageName, subpath } = parsePackageNameAndSubpath(rawPackagePath)
+    const packageJsonPath = `${MODULES_FOLDER}${packageName}/package.json`
+
+    const pkgJsonFile = vfs[packageJsonPath]
+    if (pkgJsonFile) {
+      let pkgJson
+      try {
+        pkgJson = JSON.parse(pkgJsonFile.content)
+
+        const candidates = candidatePathsFromPackageJson(
+          MODULES_FOLDER,
+          packageName,
+          subpath,
+          pkgJson
+        )
+
+        console.log(candidates)
+
+        for (const candidatePath of candidates) {
+          if (vfs[candidatePath]) {
+            return new Response(null, {
+              status: 302,
+              headers: { Location: `dep://${blockId}//${candidatePath}` },
+            })
+          }
+        }
+      } catch (err) {
+        // ignore parse errors and fall through
+        console.log('package parse error:', err)
+      }
+    }
+
+    if (!doneOne) {
+      console.log('404ing:', rawPackagePath)
+      console.log(Object.keys(vfs))
+      doneOne = true
+    }
+    return new Response(`dep:// resolution failed for ${rawPackagePath}`, {
+      status: 404,
+    })
+  })
+}
+
+function candidatePathsFromPackageJson(
+  MODULES_FOLDER,
+  packageName,
+  packagePath,
+  packageJson
+) {
+  const base = `${MODULES_FOLDER}${packageName}`
+
+  const candidateRel = []
+
+  if (!packagePath) {
+    // Root import: "pkg"
+    if (packageJson.exports) {
+      const target = packageJson.exports['.'] || packageJson.exports
+      pushExportTarget(candidateRel, target)
+    }
+
+    if (packageJson.browser && typeof packageJson.browser === 'string') {
+      candidateRel.push(packageJson.browser)
+    }
+    if (packageJson.module) candidateRel.push(packageJson.module)
+    if (packageJson.main) candidateRel.push(packageJson.main)
+
+    candidateRel.push('index.js')
+  } else {
+    // Subpath import: "pkg/<packagePath>"
+    const key = `./${packagePath}`
+    if (packageJson.exports && packageJson.exports[key]) {
+      const target = packageJson.exports[key]
+      pushExportTarget(candidateRel, target)
+    } else {
+      candidateRel.push(packagePath)
+    }
+  }
+
+  // Expand and absolutize
+  const out = []
+  for (const rel0 of candidateRel) {
+    if (!rel0 || typeof rel0 !== 'string') continue
+
+    const rel = stripDotSlash(rel0)
+
+    const toTry = [rel]
+    if (rel.endsWith('/')) {
+      toTry.push(rel + 'index.js')
+    } else if (!rel.endsWith('.js')) {
+      toTry.push(rel + '.js')
+      toTry.push(rel + '/index.js')
+    }
+
+    for (const t of toTry) {
+      out.push(`${base}/${stripLeadingSlash(t)}`)
+    }
+  }
+
+  return out
+}
+
+function pushExportTarget(arr, target) {
+  if (!target) return
+  if (typeof target === 'string') {
+    arr.push(target)
+    return
+  }
+  if (typeof target === 'object') {
+    if (typeof target.import === 'string') arr.push(target.import)
+    else if (typeof target.default === 'string') arr.push(target.default)
+  }
+}
+
+function wrapCjsAsEsm(cjsCode) {
+  return `
+const module = { exports: {} };
+const exports = module.exports;
+
+(function (module, exports) {
+${cjsCode}
+})(module, exports);
+
+export default module.exports;
+`.trim()
+}
+
+function stripDotSlash(p) {
+  return p.startsWith('./') ? p.slice(2) : p
+}
+
+function stripLeadingSlash(p) {
+  return p.startsWith('/') ? p.slice(1) : p
+}
+
+function transpileBareImports(code, blockId) {
+  const isBare = s =>
+    !/^(?:\.{1,2}\/|\/|dep:|node:|https?:|data:|file:)/.test(s)
+
+  const toDep = s => (isBare(s) ? `dep://${blockId}//${s}` : s)
+
+  // import ... from "x"  | export ... from "x"
+  code = code.replace(
+    /\b(import|export)\s+([^'"]*?\s+from\s+)?(["'])([^"']+)\3/g,
+    (m, kw, fromPart, q, spec) =>
+      `${kw} ${fromPart || ''}${q}${toDep(spec)}${q}`
+  )
+
+  // side-effect import "x"
+  code = code.replace(
+    /\bimport\s+(["'])([^"']+)\1/g,
+    (m, q, spec) => `import ${q}${toDep(spec)}${q}`
+  )
+
+  // dynamic import("x")
+  code = code.replace(
+    /\bimport\s*\(\s*(["'])([^"']+)\1\s*\)/g,
+    (m, q, spec) => `import(${q}${toDep(spec)}${q})`
+  )
+
+  // require("x") (useful for CJS packages)
+  code = code.replace(
+    /\brequire\s*\(\s*(["'])([^"']+)\1\s*\)/g,
+    (m, q, spec) => `require(${q}${toDep(spec)}${q})`
+  )
+
+  return code
+}
+
+/*
 function parsePackageAndSubpath(rawPath) {
   let packageName, packagePath
 
@@ -168,6 +472,14 @@ function parsePackageAndSubpath(rawPath) {
   return { packageName, packagePath }
 }
 
+function transpileBareImports(code, blockId) {
+  return code.replace(
+    /from\s+(['"])([^.'"/][^'"]*)\1/g,
+    (match, quote, specifier) =>
+      `from ${quote}dep://${blockId}//${specifier}${quote}`
+  )
+}
+
 const joinSep = (...args) => {
   return join(...args).replace(/\\/g, '/')
 }
@@ -178,6 +490,14 @@ export function initDependencyProtocolHandler() {
 
   protocol.handle('dep', async request => {
     const url = new URL(request.url)
+
+    if (url.pathname.includes('package.json')) {
+      console.log('=== REQUEST FOR PACKAGE.JSON ===')
+      console.log('Full URL:', request.url)
+      console.log('Pathname:', url.pathname)
+      console.log('Referrer:', request.referrer) // This shows which file imported it
+    }
+
     const blockId = url.hostname
 
     const { dependencies, path } = store.getState().blocks[blockId]
@@ -185,20 +505,37 @@ export function initDependencyProtocolHandler() {
     const rawPackagePath = url.pathname.slice(2)
     const { packageName, packagePath } = parsePackageAndSubpath(rawPackagePath)
 
-    if (!dependencies[packageName]) {
-      return new Response(`Package not found: ${packageName}`, {
-        status: 404,
-      })
+    // Try top-level first
+    let targetDependency = dependencies[packageName]
+    let contents
+
+    // If not found at top level, aggregate from all nested dependencies
+    if (!targetDependency) {
+      const aggregatedContents = {}
+
+      for (const [parentName, parentDep] of Object.entries(dependencies)) {
+        // Find all files belonging to this package across all parents
+        for (const [path, fileData] of Object.entries(parentDep.contents)) {
+          if (path.includes(`/node_modules/${packageName}/`)) {
+            aggregatedContents[path] = fileData
+          }
+        }
+      }
+
+      if (Object.keys(aggregatedContents).length === 0) {
+        return new Response(`Package not found: ${packageName}`, {
+          status: 404,
+        })
+      }
+
+      // Create a virtual dependency with aggregated contents
+      contents = aggregatedContents
+      targetDependency = { contents: aggregatedContents }
+    } else {
+      contents = targetDependency.contents
     }
 
-    // handle asset loading
-    if (packagePath && packagePath.endsWith('.wasm')) {
-      // look for the file inside the block folder
-      console.log('WASM')
-      console.log(path)
-    }
-
-    const { contents, dependencyAliases } = dependencies[packageName]
+    const dependencyAliases = targetDependency.dependencyAliases || {}
 
     // if the provided path is exact, return the code, otherwise resolve with redirect
     console.log(packageName, packagePath)
@@ -208,6 +545,10 @@ export function initDependencyProtocolHandler() {
       if (contents[codePath]) {
         const details = contents[codePath]
         let code = details.content
+
+        // Transpile bare imports to relative paths
+        code = transpileBareImports(code, blockId)
+
         if (details.isModule === false) {
           code = `
 const exports = {};
@@ -218,6 +559,7 @@ const module = { exports };
 export default module.exports;
   `
         }
+        //console.log(code.slice(0, 300))
         return new Response(code, {
           headers: { 'content-type': 'application/javascript' },
         })
@@ -286,4 +628,4 @@ export default module.exports;
       }
     )
   })
-}
+}*/

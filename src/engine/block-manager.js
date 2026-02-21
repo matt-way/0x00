@@ -43,7 +43,7 @@ async function createBlock(id, block, program) {
 
     outputLinkChanges: {},
     updateBlocks: {},
-    paused: false,
+    paused: block.config?.block?.paused || false,
     enginePaused: false,
     pauseState: [],
     onChangeStore: [],
@@ -256,10 +256,12 @@ async function createBlock(id, block, program) {
   blocks[id].events.push(
     subscribe(
       `blocks.${id}.config.block.paused`,
-      (isPaused, wasPaused, state) => {
+      async (isPaused, wasPaused, state) => {
         blocks[id].paused = isPaused
         if (!isPaused && wasPaused) {
-          resumeBlock(id)
+          if (await buildRunFunction(id, state.blocks[id].code)) {
+            resumeBlock(id)
+          }
         }
       }
     )
@@ -314,18 +316,16 @@ async function buildRunFunction(id, code) {
   // TODO: if the code fails to compile run() wont be set
   // and the engine will crash on this block. Need to setup a fix
   const block = blocks[id]
-  if (!block.codeInitialised || !block.depsInitialised) {
+  if (!block.codeInitialised || !block.depsInitialised || block.paused) {
     return false
   }
   const transpiledResult = transpile(id, block, code)
-  //const blockFunction = requireFromString(transpiledResult.code, id)
   const codeUrl = `data:text/javascript;base64,${Buffer.from(
     transpiledResult.code,
     'utf8'
   ).toString('base64')}`
   // the webpack ignore must go here so that webpack doesnt try and handle this import in any way
   const mod = await import(/* webpackIgnore: true */ codeUrl)
-  //block.runFunction = blockFunction.default
   block.runFunction = mod.default
   return true
 }

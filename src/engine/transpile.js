@@ -30,7 +30,8 @@ const importExtractor = blockId => {
         )
         const source = path.node.source.value
         if (!builtinModules.includes(source) && source !== 'electron') {
-          path.node.source.value = `dep://${blockId}//${source}`
+          //path.node.source.value = `dep://${blockId}//${source}`
+          path.node.source.value = `dep://${source}`
         }
         programPath.node.body = [path.node, ...programPath.node.body]
         path.remove()
