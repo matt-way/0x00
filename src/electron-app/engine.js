@@ -66,5 +66,15 @@ export async function attachEngine(mainWindow) {
 }
 
 export function reloadEngine() {
+  // On Windows, Chromium is very slow at tearing down thousands of DevTools console
+  // DOM nodes during a page reload. Closing DevTools first destroys the panel so
+  // there's nothing to clear, then we reopen after the page finishes loading.
+  const devToolsOpen = engineView.webContents.isDevToolsOpened()
+  if (devToolsOpen) {
+    engineView.webContents.closeDevTools()
+    engineView.webContents.once('did-finish-load', () => {
+      engineView.webContents.openDevTools()
+    })
+  }
   engineView.webContents.reload()
 }

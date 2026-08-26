@@ -1,21 +1,24 @@
 /** @jsxImportSource theme-ui */
-import { ToolbarButton, Icon } from 'components/system'
+import { Flex, ToolbarButton, Icon } from 'components/system'
 
 const EditorToolbar = props => {
   const { block, blockActions } = props
   const blockConfig = block?.config?.block || {}
 
   return (
-    <div
+    <Flex
+      justifyContent="space-between"
+      alignItems="stretch"
       sx={{
         backgroundColor: 'surface',
-        borderBottomWidth: blockConfig.showChat ? '0px' : '2px',
+        borderBottomWidth: '2px',
         borderBottomStyle: 'solid',
         borderBottomColor: 'surfaceLowest',
         borderRadius: '5px 5px 0px 0px',
         fontSize: '12px',
-        //padding: '5px',
+        flexShrink: 0,
       }}>
+      <div />
       <ToolbarButton
         sx={{
           padding: '5px 12px',
@@ -27,7 +30,7 @@ const EditorToolbar = props => {
         }}>
         <Icon type="chat" size={18} />
       </ToolbarButton>
-    </div>
+    </Flex>
   )
 }
 

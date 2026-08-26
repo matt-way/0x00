@@ -1,4 +1,5 @@
 import store from './store'
+import chokidar from 'chokidar'
 import ipcConstants from 'ipc/constants'
 import { DateTime } from 'luxon'
 import { getAllowedName } from 'state/blocks/utils'
@@ -14,7 +15,7 @@ import {
   renameDirectory,
   ensureDir,
 } from './disk/fs'
-import { join, dirname } from './disk/path'
+import { join, dirname, resolve } from './disk/path'
 import { subscribe } from 'state-management/watcher'
 import { handle } from 'ipc/main'
 import { batch } from 'react-redux'
@@ -34,6 +35,25 @@ const BLOCK_FOLDER = 'blocks'
 const BLOCK_CONFIG_FILE = 'package.json'
 const BLOCK_DEFAULT_CODE_FILE = 'code.js'
 const BLOCK_DEFAULT_STATE_PATH = 'state'
+
+// node_modules would flood the watcher during a dependency install, and there is
+// never anything in a dot folder we need to react to
+const IGNORED_PATHS = /(?:^|[\\/])(?:node_modules|\.[^\\/]*)(?:[\\/]|$)/
+
+const WATCH_LOG = '[code-watch]'
+
+// The last content we know is on disk for each block code file. Both the watcher
+// and the serialiser check this before acting, so neither reacts to its own write.
+const diskCode = new Map()
+
+// join() gives native separators but dirname() hands back forward slashes, so
+// paths for the same file can be spelled differently depending on where they came
+// from. Compare through this instead of directly.
+const pathKey = _path =>
+  process.platform === 'win32' ? resolve(_path).toLowerCase() : resolve(_path)
+
+const getCodePath = block =>
+  join(block.path, block.config.main || BLOCK_DEFAULT_CODE_FILE)
 
 const createBlock = async (x = 0, y = 0, moduleName) => {
   const { program, blocks } = store.getState()
@@ -144,9 +164,9 @@ const openBlock = async (
 ) => {
   const blockPath = join(programPath, BLOCK_FOLDER, blockName)
   const config = await readJson(join(blockPath, BLOCK_CONFIG_FILE))
-  const code = await readFile(
-    join(blockPath, config.main || BLOCK_DEFAULT_CODE_FILE)
-  )
+  const blockCodePath = join(blockPath, config.main || BLOCK_DEFAULT_CODE_FILE)
+  const code = await readFile(blockCodePath)
+  diskCode.set(pathKey(blockCodePath), code)
   const depNames = Object.keys(config.dependencies || {})
   const manifests = await Promise.all(
     depNames.map(dependencyName => {
@@ -179,10 +199,13 @@ const serialiseConfig = blockId => {
 const serialiseCode = blockId => {
   const { blocks } = store.getState()
   const block = blocks[blockId]
-  const codePath = join(
-    block.path,
-    block.config.main || BLOCK_DEFAULT_CODE_FILE
-  )
+  const codePath = getCodePath(block)
+  // this content is already on disk, so the change came from the watcher.
+  // writing it back would only churn the file's mtime for external tools.
+  if (diskCode.get(pathKey(codePath)) === block.hotcode) {
+    return
+  }
+  diskCode.set(pathKey(codePath), block.hotcode)
   return writeFile(codePath, block.hotcode)
 }
 
@@ -284,6 +307,103 @@ const loadState = async blockId => {
   }
 }
 
+let codeWatcher
+
+const findBlockByCodePath = filePath => {
+  const { blocks } = store.getState()
+  const key = pathKey(filePath)
+  const blockId = Object.keys(blocks).find(id => {
+    const block = blocks[id]
+    // blocks mid-create have no path or config yet
+    return block.path && block.config && pathKey(getCodePath(block)) === key
+  })
+
+  if (!blockId) {
+    // most likely a file we don't care about, but if it was a block's code file
+    // then the paths are spelled differently and we need to see both to fix it
+    console.log(`${WATCH_LOG} no block for ${key}`)
+    Object.keys(blocks).forEach(id => {
+      const block = blocks[id]
+      if (block.path && block.config) {
+        console.log(`${WATCH_LOG}   known ${pathKey(getCodePath(block))}`)
+      }
+    })
+  }
+
+  return blockId
+}
+
+const loadExternalCode = async filePath => {
+  const blockId = findBlockByCodePath(filePath)
+  if (!blockId) {
+    return
+  }
+
+  const code = await readFile(filePath)
+  diskCode.set(pathKey(filePath), code)
+
+  // an external edit wins over an unsaved editor buffer, so this compares
+  // against hotcode too rather than just the last saved code
+  const block = store.getState().blocks[blockId]
+  if (block.code === code && block.hotcode === code) {
+    console.log(`${WATCH_LOG} ${block.name} already up to date, ignoring`)
+    return
+  }
+
+  // persistCode is the same action an in-app save dispatches, so the editor
+  // updates and the engine re-runs the block exactly as if it had been saved
+  console.log(`${WATCH_LOG} applying external change to ${block.name}`)
+  dispatch(actions.persistCode(blockId, code))
+}
+
+const watchCode = programPath => {
+  if (codeWatcher) {
+    codeWatcher.close()
+    codeWatcher = null
+  }
+  if (!programPath) {
+    return
+  }
+
+  const watchPath = join(programPath, BLOCK_FOLDER)
+  console.log(`${WATCH_LOG} watching ${watchPath}`)
+
+  codeWatcher = chokidar.watch(watchPath, {
+    ignoreInitial: true,
+    ignored: IGNORED_PATHS,
+    // editors and agents often write in several chunks; wait for the file
+    // to settle so we never read a half-written block
+    awaitWriteFinish: { stabilityThreshold: 50, pollInterval: 10 },
+    // native fs events don't arrive on some network and virtual drives, which
+    // looks exactly like the watcher being broken. set NULL_WATCH_POLL=1 to
+    // fall back to polling.
+    usePolling: !!process.env.NULL_WATCH_POLL,
+  })
+
+  codeWatcher
+    .on('ready', () => {
+      const watched = codeWatcher.getWatched()
+      const count = Object.values(watched).reduce((n, f) => n + f.length, 0)
+      console.log(
+        count > 0
+          ? `${WATCH_LOG} ready, tracking ${count} entries`
+          : `${WATCH_LOG} ready but tracking nothing - does that path exist?`
+      )
+    })
+    // some editors write in place ('change'), others write a temp file and
+    // rename it over the target, which surfaces as 'add'. handle both.
+    .on('all', (event, filePath) => {
+      console.log(`${WATCH_LOG} ${event} ${filePath}`)
+      if (event !== 'change' && event !== 'add') {
+        return
+      }
+      loadExternalCode(filePath).catch(err => {
+        console.error(`${WATCH_LOG} failed on ${filePath}`, err)
+      })
+    })
+    .on('error', err => console.error(`${WATCH_LOG} error`, err))
+}
+
 const initBlocks = () => {
   // watch for config changes
   subscribe('blocks', (blocks, oldBlocks) => {
@@ -304,7 +424,10 @@ const initBlocks = () => {
     })
   })
 
-  // watch for code changes
+  // watch for code changes made outside the app. re-targets whenever a
+  // different program is opened, and stops while none is
+  console.log(`${WATCH_LOG} init, waiting for a program to open`)
+  subscribe('program.path', watchCode)
 
   const blockChannels = ipcConstants.blocks
   handle(blockChannels.create, createBlock)

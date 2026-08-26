@@ -11,11 +11,11 @@ import Chat from './chat'
 const MonacoPanel = props => {
   const { blockId } = props
   const editorRef = useRef()
-  const containerRef = useRef()
   const [block, blockActions] = useBlock(blockId)
   const [settings] = useSettings()
   const [program] = useProgram()
   const blockInstance = program?.config?.blocks[blockId] || {}
+  const showChat = block?.config?.block?.showChat
 
   const onCodeChanged = useCallback(newCode => {
     blockActions.updateCode(newCode)
@@ -30,44 +30,48 @@ const MonacoPanel = props => {
     if (editorRef.current) {
       editorRef.current.layout()
     }
-  }, [block?.config?.block.showChat])
+  }, [showChat])
 
   return (
     <div
       sx={{
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'row',
         position: 'absolute',
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
       }}>
-      <EditorToolbar block={block} blockActions={blockActions} />
-      {block?.config?.block?.showChat && (
+      {/* Editor column */}
+      <div
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          flexGrow: 1,
+          minWidth: 0,
+        }}>
+        <EditorToolbar block={block} blockActions={blockActions} />
+        <div sx={{ flexGrow: 1, overflow: 'hidden' }}>
+          <Editor
+            language="javascript"
+            theme="vs-dark"
+            value={block.hotcode}
+            options={settings.editor}
+            onChange={onCodeChanged}
+            onMount={onEditorDidMount}
+            automaticLayout={false}
+          />
+        </div>
+      </div>
+      {/* Chat side panel */}
+      {showChat && (
         <Chat
           block={block}
           blockActions={blockActions}
           blockInstance={blockInstance}
         />
       )}
-      <div
-        ref={containerRef}
-        sx={{
-          flexGrow: 1,
-          overflow: 'hidden',
-        }}>
-        <Editor
-          //ref={editorRef}
-          language="javascript"
-          theme="vs-dark"
-          value={block.hotcode}
-          options={settings.editor}
-          onChange={onCodeChanged}
-          onMount={onEditorDidMount}
-          automaticLayout={false}
-        />
-      </div>
     </div>
   )
 }

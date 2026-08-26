@@ -98,6 +98,8 @@ function splitPath(path) {
   return path.split(/[/\\]+/)
 }
 
+let saveVersion = 0
+
 export const transpile = (
   id,
   block,
