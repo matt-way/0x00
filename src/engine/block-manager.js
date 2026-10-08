@@ -49,7 +49,7 @@ async function createBlock(id, block, program) {
     onChangeStore: [],
 
     hasRan: false,
-    dormant: false,
+    flushScheduled: false,
 
     events: [],
     changeDeps: {},
@@ -77,10 +77,19 @@ async function createBlock(id, block, program) {
         }
       })
 
-      // if the block isn't currently in an execution pass (async state updates)
-      // we need to force a post run
-      if (blocks[id].dormant) {
-        processPostLinks(blocks[id])
+      // a set can come from outside this block's own run or callbacks (e.g. a function it
+      // put on state being called by another block), so flush once after the current task.
+      // If the block's own pass flushes first, this finds nothing left to do.
+      if (!blocks[id].flushScheduled) {
+        blocks[id].flushScheduled = true
+        queueMicrotask(() => {
+          // the block may have been removed before the flush ran
+          if (!blocks[id]) {
+            return
+          }
+          blocks[id].flushScheduled = false
+          processPostLinks(blocks[id])
+        })
       }
 
       return true
